@@ -1,0 +1,47 @@
+<div
+  class="min-h-screen bg-slate-900 flex flex-col justify-center items-center p-4 relative overflow-hidden"
+>
+  <div
+    class="absolute top-1/4 left-1/4 w-125 h-125 rounded-full bg-indigo-600/20 blur-[100px] animate-pulse pointer-events-none"
+  ></div>
+  <div
+    class="absolute bottom-1/4 right-1/4 w-125 h-125 rounded-full bg-amber-500/10 blur-[100px] pointer-events-none"
+  ></div>
+
+  <div class="relative z-10 flex flex-col items-center text-center max-w-md w-full animate-fade-up">
+    <div
+      class="w-24 h-24 bg-white/10 backdrop-blur-md rounded-3xl flex items-center justify-center mb-8 border border-white/20 shadow-2xl animate-spin-slow"
+    >
+      <lucide-icon name="compass" [size]="48" color="white" strokeWidth="1.5" />
+    </div>
+
+    <h1 class="font-display text-3xl md:text-4xl font-bold text-white mb-4 leading-tight">
+      AI가 맞춤형 로드맵을<br />설계하고 있습니다
+    </h1>
+    <p class="text-indigo-200 text-lg mb-12 leading-relaxed">
+      입력하신 목표와 수준을 분석하여<br />최적의 학습 경로를 탐색 중입니다.
+    </p>
+
+    <div class="w-full space-y-4 text-left">
+      @for (s of steps; track s.text; let i = $index) {
+        @if (visibleSteps[i]) {
+          <div
+            class="flex items-center gap-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 animate-fade-left"
+          >
+            <div
+              class="w-9 h-9 rounded-full bg-indigo-500/20 flex items-center justify-center shrink-0"
+            >
+              <lucide-icon [name]="s.icon" [size]="18" color="#a5b4fc" strokeWidth="1.5" />
+            </div>
+            <span class="text-slate-300 font-medium text-sm flex-1">{{ s.text }}</span>
+            <span class="text-indigo-400 text-lg animate-pulse">···</span>
+          </div>
+        }
+      }
+    </div>
+
+    <div class="w-full mt-8 h-1 bg-white/10 rounded-full overflow-hidden">
+      <div class="h-full bg-indigo-400 rounded-full generating-progress"></div>
+    </div>
+  </div>
+</div>
