@@ -25,3 +25,42 @@
 .animate-fade-up {
   animation: fade-up 500ms cubic-bezier(0.2, 0.8, 0.4, 1) both;
 }
+
+@keyframes fade-left {
+  from {
+    opacity: 0;
+    transform: translateX((-16px));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-fade-left {
+  animation: fade-left 400ms cubic-bezier(0.2, 0.8, 0.4, 1) both;
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+
+@keyframes generating {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+.generating-progress {
+  animation: generating 4s ease-in-out forwards;
+}
