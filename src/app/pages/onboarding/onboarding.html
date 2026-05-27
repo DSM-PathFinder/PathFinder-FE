@@ -1,0 +1,164 @@
+<div class="min-h-screen bg-slate-50 flex flex-col">
+  <div class="w-full bg-slate-200 h-1.5">
+    <div
+      class="h-full bg-indigo-600 transition-all duration-300 ease-out"
+      [style.width]="progressWidth"
+    ></div>
+  </div>
+
+  <div class="flex-1 flex flex-col max-w-2xl w-full mx-auto p-6 pt-12 md:pt-24">
+    <button
+      (click)="back()"
+      [class.invisible]="step === 1"
+      class="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors mb-8 w-fit text-sm font-medium"
+    >
+      <lucide-icon name="arrow-left" [size]="16" />
+      Back
+    </button>
+
+    <div class="flex-1">
+      <div class="mb-8 animate-fade-up">
+        <div class="flex items-center gap-3 text-indigo-600 mb-4">
+          <lucide-icon [name]="currentMeta.icon" [size]="22" />
+          <span class="font-medium tracking-wide uppercase text-sm">{{ currentMeta.label }}</span>
+        </div>
+        <h2 class="font-display text-3xl md:text-4xl font-bold text-slate-900 mb-3">
+          {{ currentMeta.title }}
+        </h2>
+        <p class="text-slate-500 text-lg">{{ currentMeta.desc }}</p>
+      </div>
+
+      @if (step === 1) {
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-up">
+          @for (l of levels; track l.id) {
+            <button
+              (click)="selectLevel(l.id)"
+              [class]="
+                formData.level === l.id
+                  ? 'p-6 rounded-2xl border-2 text-left transition-all duration-200 border-indigo-600 bg-indigo-50/50 shadow-sm'
+                  : 'p-6 rounded-2xl border-2 text-left transition-all duration-200 border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50'
+              "
+            >
+              <h3
+                [class]="
+                  formData.level === l.id
+                    ? 'font-bold text-lg mb-1 text-indigo-900'
+                    : 'font-bold text-lg mb-1 text-slate-900'
+                "
+              >
+                {{ l.label }}
+              </h3>
+              <p
+                [class]="
+                  formData.level === l.id ? 'text-sm text-indigo-700' : 'text-sm text-slate-500'
+                "
+              >
+                {{ l.desc }}
+              </p>
+            </button>
+          }
+        </div>
+      }
+
+      @if (step === 2) {
+        <div class="animate-fade-up">
+          <textarea
+            [(ngModel)]="formData.goal"
+            placeholder="예: 네카라쿠배 프론트엔드 신입 합격, React와 Node.js를 활용한 풀스택 서비스 런칭..."
+            class="w-full p-6 rounded-2xl border-2 border-slate-200 focus:border-indigo-600 focus:outline-none text-lg resize-none h-48 transition-colors bg-white"
+            autofocus
+          >
+          </textarea>
+        </div>
+      }
+
+      @if (step === 3) {
+        <div
+          class="bg-white p-8 md:p-10 rounded-3xl border border-slate-200 shadow-sm animate-fade-up"
+        >
+          <div class="text-center mb-10">
+            <div class="inline-flex items-baseline">
+              <span
+                class="text-7xl font-display font-bold text-indigo-900 tabular-nums transition-all duration-150"
+              >
+                {{ formData.hours }}
+              </span>
+              <span class="text-2xl text-slate-500 font-medium ml-2">시간 / 주</span>
+            </div>
+            <p class="text-sm text-slate-400 mt-2 flex items-center justify-center gap-1.5">
+              <lucide-icon name="clock" [size]="14" />
+              슬라이더를 드래그하세요
+            </p>
+          </div>
+
+          <div class="relative px-2">
+            <input
+              type="range"
+              [value]="formData.hours"
+              (input)="onSliderChange($event)"
+              min="1"
+              max="40"
+              step="1"
+              class="w-full h-2 rounded-full appearance-none cursor-pointer slider"
+              [style]="
+                'background: linear-gradient(to right, #4f46e5 ' +
+                sliderPct +
+                '%, #e2e8f0 ' +
+                sliderPct +
+                '%)'
+              "
+            />
+            <div class="flex justify-between text-sm text-slate-400 mt-4 font-medium">
+              <span>1시간</span>
+              <span>20시간</span>
+              <span>40시간</span>
+            </div>
+          </div>
+
+          <div class="flex justify-center gap-2 mt-8">
+            @for (p of [5, 10, 20, 30]; track p) {
+              <button
+                (click)="formData.hours = p"
+                [class]="
+                  formData.hours === p
+                    ? 'px-4 py-1.5 rounded-full text-xs font-medium border bg-indigo-600 text-white border-indigo-600'
+                    : 'px-4 py-1.5 rounded-full text-xs font-medium border bg-white text-slate-600 border-slate-200 hover:border-indigo-300'
+                "
+              >
+                {{ p }}시간
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      @if (step === 4) {
+        <div class="flex flex-wrap gap-3 animate-fade-up">
+          @for (interest of interests; track interest) {
+            <button
+              (click)="toggleInterest(interest)"
+              [class]="
+                isInterestSelected(interest)
+                  ? 'px-5 py-3 rounded-full text-base font-medium transition-all duration-200 border-2 bg-indigo-600 border-indigo-600 text-white shadow-md'
+                  : 'px-5 py-3 rounded-full text-base font-medium transition-all duration-200 border-2 bg-white border-slate-200 text-slate-600 hover:border-indigo-300 hover:bg-slate-50'
+              "
+            >
+              {{ interest }}
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="mt-12 pt-6 border-t border-slate-200 flex justify-end">
+      <button
+        (click)="next()"
+        [disabled]="!isValid"
+        class="flex items-center gap-2 bg-indigo-900 hover:bg-indigo-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-medium py-4 px-8 rounded-xl transition-colors text-lg"
+      >
+        {{ step === 4 ? '로드맵 생성하기' : 'Next Step' }}
+        <lucide-icon name="arrow-right" [size]="20" />
+      </button>
+    </div>
+  </div>
+</div>

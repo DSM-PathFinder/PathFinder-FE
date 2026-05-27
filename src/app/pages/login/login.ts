@@ -12,6 +12,6 @@ export class LoginComponent {
   constructor(private router: Router) {}
 
   handleLogin() {
-    this.router.navigate(['/generating']);
+    this.router.navigate(['/onboarding']);
   }
 }
