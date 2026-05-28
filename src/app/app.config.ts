@@ -1,8 +1,62 @@
 import { ApplicationConfig, importProvidersFrom } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
-import { LucideAngularModule, icons } from 'lucide-angular';
+import {
+  LucideAngularModule,
+  AlertCircle,
+  Flame,
+  RefreshCw,
+  Clock,
+  TrendingUp,
+  CheckCircle2,
+  Circle,
+  Play,
+  Map,
+  Users,
+  Compass,
+  LayoutDashboard,
+  BookOpen,
+  User,
+  LogOut,
+  X,
+  CheckCircle,
+  Info,
+  ArrowLeft,
+  ArrowRight,
+  Brain,
+  Target,
+  Sparkles,
+} from 'lucide-angular';
 
 export const appConfig: ApplicationConfig = {
-  providers: [provideRouter(routes), importProvidersFrom(LucideAngularModule.pick(icons))],
+  providers: [
+    provideRouter(routes),
+    importProvidersFrom(
+      LucideAngularModule.pick({
+        AlertCircle,
+        Flame,
+        RefreshCw,
+        Clock,
+        TrendingUp,
+        CheckCircle2,
+        Circle,
+        Play,
+        Map,
+        Users,
+        Compass,
+        LayoutDashboard,
+        BookOpen,
+        User,
+        LogOut,
+        X,
+        CheckCircle,
+        Info,
+        ArrowLeft,
+        ArrowRight,
+        Brain,
+        Target,
+        Sparkles,
+      }),
+    ),
+  ],
 };
