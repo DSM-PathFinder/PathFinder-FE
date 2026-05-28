@@ -1,19 +1,31 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './pages/login/login';
-import { GeneratingComponent } from './pages/generating/generating';
-import { OnboardingComponent } from './pages/onboarding/onboarding';
-import { DashboardComponent } from './pages/dashboard/dashboard';
 import { LayoutComponent } from './components/layout/layout';
 
 export const routes: Routes = [
   {
     path: '',
     component: LayoutComponent,
-    redirectTo: 'login',
-    pathMatch: 'full',
+    children: [
+      { path: '', redirectTo: 'login', pathMatch: 'full' },
+      {
+        path: 'login',
+        loadComponent: () => import('./pages/login/login').then((m) => m.LoginComponent),
+      },
+      {
+        path: 'onboarding',
+        loadComponent: () =>
+          import('./pages/onboarding/onboarding').then((m) => m.OnboardingComponent),
+      },
+      {
+        path: 'generating',
+        loadComponent: () =>
+          import('./pages/generating/generating').then((m) => m.GeneratingComponent),
+      },
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./pages/dashboard/dashboard').then((m) => m.DashboardComponent),
+      },
+    ],
   },
-  { path: 'login', component: LoginComponent },
-  { path: 'onboarding', component: OnboardingComponent },
-  { path: 'generating', component: GeneratingComponent },
-  { path: 'dashboard', component: DashboardComponent },
 ];
