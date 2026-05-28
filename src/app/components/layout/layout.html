@@ -1,0 +1,95 @@
+@if (shouldHideNav) {
+  <router-outlet />
+  <app-toast />
+}
+
+@if (!shouldHideNav) {
+  <div class="min-h-screen bg-slate-50 flex flex-col md:flex-row">
+    <div
+      class="md:hidden bg-white border-b border-slate-200 p-4 flex justify-between items-center sticky top-0 z-40 shadow-sm"
+    >
+      <a routerLink="/dashboard" class="flex items-center gap-2 text-indigo-900">
+        <lucide-icon name="compass" [size]="24" />
+        <span class="font-display font-bold text-xl tracking-tight">PathFinder</span>
+      </a>
+      <a routerLink="/my">
+        <div
+          class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm"
+        >
+          U
+        </div>
+      </a>
+    </div>
+
+    <nav
+      class="hidden md:flex flex-col w-64 bg-white border-r border-slate-200 h-screen sticky top-0 p-6"
+    >
+      <a routerLink="/dashboard" class="flex items-center gap-2.5 text-indigo-900 mb-12">
+        <div class="w-9 h-9 bg-indigo-900 rounded-xl flex items-center justify-center">
+          <lucide-icon name="compass" [size]="20" color="white" />
+        </div>
+        <span class="font-display font-bold text-2xl tracking-tight">PathFinder</span>
+      </a>
+
+      <div class="flex-1 flex flex-col gap-1">
+        @for (item of navItems; track item.path) {
+          <a
+            [routerLink]="item.path"
+            routerLinkActive="bg-indigo-50 text-indigo-700 font-semibold"
+            [routerLinkActiveOptions]="{ exact: false }"
+            class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+          >
+            <lucide-icon [name]="item.icon" [size]="18" />
+            <span class="text-sm">{{ item.label }}</span>
+          </a>
+        }
+      </div>
+
+      <div class="mt-auto pt-6 border-t border-slate-100">
+        <a
+          routerLink="/my"
+          class="flex items-center gap-3 px-4 py-3 mb-1 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer"
+        >
+          <div
+            class="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm shrink-0"
+          >
+            U
+          </div>
+          <div class="flex flex-col min-w-0">
+            <span class="text-sm font-semibold text-slate-900 truncate">User Name</span>
+            <span class="text-xs text-slate-500">Free Plan</span>
+          </div>
+        </a>
+        <a
+          routerLink="/login"
+          class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors text-sm"
+        >
+          <lucide-icon name="log-out" [size]="18" />
+          <span>Logout</span>
+        </a>
+      </div>
+    </nav>
+
+    <main class="flex-1 w-full max-w-7xl mx-auto pb-20 md:pb-0">
+      <router-outlet />
+    </main>
+
+    <nav
+      class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around py-2 z-40"
+    >
+      @for (item of navItems; track item.path) {
+        <a
+          [routerLink]="item.path"
+          routerLinkActive="text-indigo-600"
+          [routerLinkActiveOptions]="{ exact: false }"
+          class="flex flex-col items-center gap-1 p-2 rounded-lg flex-1 text-slate-400"
+        >
+          <lucide-icon [name]="item.icon" [size]="20" />
+          <span class="text-[10px] font-medium">{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+
+    <app-toast />
+  </div>
+}
