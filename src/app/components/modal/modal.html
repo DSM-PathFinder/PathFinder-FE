@@ -1,0 +1,39 @@
+@if (open) {
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 overflow-y-auto animate-fade-in"
+    (click)="close.emit()"
+  >
+    <div
+      [class]="
+        'bg-white rounded-3xl shadow-2xl w-full my-auto relative max-h-[90vh] flex flex-col animate-scale-in ' +
+        maxWidth
+      "
+      (click)="$event.stopPropagation()"
+    >
+      @if (title) {
+        <div class="flex items-center justify-between p-6 border-b border-slate-100 shrink-0">
+          <h3 class="text-xl font-bold text-slate-900">{{ title }}</h3>
+          <button
+            (click)="close.emit()"
+            class="text-slate-400 hover:text-slate-700 transition-colors p-1 rounded-lg hover:bg-slate-100"
+          >
+            <lucide-icon name="x" [size]="20" />
+          </button>
+        </div>
+      }
+
+      @if (!title) {
+        <button
+          (click)="close.emit()"
+          class="absolute top-4 right-4 z-10 text-slate-400 hover:text-slate-700 transition-colors p-2 rounded-lg hover:bg-slate-100"
+        >
+          <lucide-icon name="x" [size]="20" />
+        </button>
+      }
+
+      <div class="overflow-y-auto flex-1">
+        <ng-content />
+      </div>
+    </div>
+  </div>
+}
