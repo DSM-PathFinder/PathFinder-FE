@@ -1,0 +1,35 @@
+<div class="fixed top-6 right-6 z-100 flex flex-col gap-3 pointer-events-none">
+  @for (t of toastService.toasts(); track t.id) {
+    <div
+      class="pointer-events-auto bg-white border border-slate-200 shadow-lg rounded-2xl p-4 pr-3 flex items-center gap-3 min-w-70 max-w-sm animate-slide-in"
+    >
+      <div
+        [class]="
+          'p-1.5 rounded-lg shrink-0 ' +
+          (t.type === 'success'
+            ? 'bg-emerald-50 text-emerald-600'
+            : t.type === 'error'
+              ? 'bg-rose-50 text-rose-600'
+              : 'bg-indigo-50 text-indigo-600')
+        "
+      >
+        @if (t.type === 'success') {
+          <lucide-icon name="check-circle-2" [size]="20" />
+        } @else if (t.type === 'error') {
+          <lucide-icon name="alert-circle" [size]="20" />
+        } @else {
+          <lucide-icon name="info" [size]="20" />
+        }
+      </div>
+
+      <p class="text-sm font-medium text-slate-700 flex-1">{{ t.message }}</p>
+
+      <button
+        (click)="toastService.remove(t.id)"
+        class="text-slate-400 hover:text-slate-700 transition-colors p-1"
+      >
+        <lucide-icon name="x" [size]="16" />
+      </button>
+    </div>
+  }
+</div>
