@@ -26,6 +26,10 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./pages/dashboard/dashboard').then((m) => m.DashboardComponent),
       },
+      {
+        path: 'roadmap',
+        loadComponent: () => import('./pages/roadmap/roadmap').then((m) => m.RoadmapComponent),
+      },
     ],
   },
 ];
