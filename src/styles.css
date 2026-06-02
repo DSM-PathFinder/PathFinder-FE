@@ -113,3 +113,77 @@
 .animate-fade-in {
   animation: fade-in 150ms ease both;
 }
+
+.markdown {
+  color: #334155;
+  font-size: 0.95rem;
+  line-height: 1.75;
+}
+.markdown h1 {
+  font-size: 2rem;
+  margin: 2rem 0 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+.markdown h2 {
+  font-size: 1.5rem;
+  margin: 1.75rem 0 0.875rem;
+  padding-left: 0.875rem;
+  border-left: 4px solid #4f46e5;
+}
+.markdown h3 {
+  font-size: 1.2rem;
+  margin: 1.5rem 0 0.75rem;
+  color: #312e81;
+}
+.markdown p {
+  margin: 0.85rem 0;
+}
+.markdown strong {
+  font-weight: 600;
+  color: #0f172a;
+}
+.markdown code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85em;
+  background: #eef2ff;
+  color: #3730a3;
+  padding: 0.15em 0.45em;
+  border-radius: 0.35rem;
+}
+.markdown pre {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 1.1rem 1.25rem;
+  border-radius: 0.875rem;
+  overflow-x: auto;
+  margin: 1.1rem 0;
+  font-size: 0.85rem;
+}
+.markdown pre code {
+  background: transparent;
+  color: inherit;
+  border: none;
+  padding: 0;
+}
+.markdown ul {
+  list-style: disc;
+  padding-left: 1.5rem;
+  margin: 0.85rem 0;
+}
+.markdown ol {
+  list-style: decimal;
+  padding-left: 1.5rem;
+  margin: 0.85rem 0;
+}
+.markdown li {
+  margin: 0.4rem 0;
+}
+.markdown blockquote {
+  margin: 1.25rem 0;
+  padding: 0.85rem 1.25rem;
+  background: #fffbeb;
+  border-left: 4px solid #f59e0b;
+  color: #92400e;
+  font-style: italic;
+}
