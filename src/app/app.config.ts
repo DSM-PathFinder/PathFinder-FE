@@ -35,10 +35,14 @@ import {
   Plus,
   Sparkles,
 } from 'lucide-angular';
+import { provideMarkdown } from 'ngx-markdown';
+import { provideHttpClient } from '@angular/common/http';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
+    provideHttpClient(),
+    provideMarkdown(),
     importProvidersFrom(
       LucideAngularModule.pick({
         AlertCircle,
