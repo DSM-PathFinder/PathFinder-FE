@@ -1,5 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900&family=Inter:wght@300;400;500;600;700&display=swap');
-
+@import 'highlight.js/styles/github-dark.min.css';
 @import 'tailwindcss';
 
 @layer base {
