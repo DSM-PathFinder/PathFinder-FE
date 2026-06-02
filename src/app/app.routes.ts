@@ -34,6 +34,10 @@ export const routes: Routes = [
         path: 'notes',
         loadComponent: () => import('./pages/notes/notes').then((m) => m.NotesComponent),
       },
+      {
+        path: 'my',
+        loadComponent: () => import('./pages/my-page/my-page').then((m) => m.MyPageComponent),
+      },
     ],
   },
 ];
