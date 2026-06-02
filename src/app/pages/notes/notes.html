@@ -1,7 +1,5 @@
 <div class="flex h-screen overflow-hidden bg-slate-50">
-  <!-- 왼쪽 사이드바 -->
   <div class="w-80 shrink-0 bg-white border-r border-slate-200 flex flex-col">
-    <!-- 헤더 -->
     <div class="p-4 border-b border-slate-200 shrink-0">
       <div class="flex items-center justify-between mb-4">
         <h2 class="font-display font-bold text-xl text-slate-900">학습 노트</h2>
@@ -25,7 +23,6 @@
       </div>
     </div>
 
-    <!-- 노트 목록 -->
     <div class="flex-1 overflow-y-auto p-2 space-y-1">
       @if (filteredNotes.length === 0) {
         <div class="text-center text-sm text-slate-400 py-8">검색 결과가 없습니다</div>
@@ -67,9 +64,7 @@
     </div>
   </div>
 
-  <!-- 오른쪽 에디터 -->
   <div class="flex-1 flex flex-col overflow-hidden">
-    <!-- 에디터 헤더 -->
     <div
       class="h-16 shrink-0 bg-white border-b border-slate-200 flex items-center justify-between px-6"
     >
@@ -89,9 +84,7 @@
       </button>
     </div>
 
-    <!-- 에디터 + 프리뷰 -->
     <div class="flex-1 flex overflow-hidden">
-      <!-- 마크다운 에디터 -->
       <div class="flex-1 border-r border-slate-200 bg-white overflow-y-auto">
         <textarea
           [(ngModel)]="content"
@@ -101,7 +94,6 @@
         </textarea>
       </div>
 
-      <!-- 마크다운 프리뷰 -->
       <div class="flex-1 bg-slate-50 overflow-y-auto">
         <div class="markdown p-6 md:p-8 max-w-2xl mx-auto">
           <markdown [data]="content" [disableSanitizer]="true" />
