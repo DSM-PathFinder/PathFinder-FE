@@ -1,6 +1,8 @@
 import { ApplicationConfig, importProvidersFrom } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
+import { provideHttpClient } from '@angular/common/http';
+import { provideMarkdown } from 'ngx-markdown';
 import {
   LucideAngularModule,
   AlertCircle,
@@ -27,16 +29,21 @@ import {
   Youtube,
   FileText,
   Share2,
+  NotebookPen,
+  Mail,
+  Edit3,
+  Calendar,
+  Award,
+  Target,
+  Sparkles,
   Globe,
   Lock,
-  NotebookPen,
-  Target,
+  Bell,
+  Github,
   ChevronRight,
+  Heart,
   Plus,
-  Sparkles,
 } from 'lucide-angular';
-import { provideMarkdown } from 'ngx-markdown';
-import { provideHttpClient } from '@angular/common/http';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -76,6 +83,13 @@ export const appConfig: ApplicationConfig = {
         ChevronRight,
         Plus,
         Sparkles,
+        Mail,
+        Edit3,
+        Calendar,
+        Award,
+        Bell,
+        Github,
+        Heart,
       }),
     ),
   ],
