@@ -1,4 +1,10 @@
-import { Component, OnInit, signal, computed, inject, ChangeDetectorRef } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  inject,
+  ChangeDetectorRef,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -111,6 +117,7 @@ console.log(counter()); // 1
 @Component({
   selector: 'app-notes',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Default,
   imports: [FormsModule, LucideAngularModule, MarkdownModule],
   templateUrl: './notes.html',
 })
@@ -119,31 +126,29 @@ export class NotesComponent implements OnInit {
   private toast = inject(ToastService);
   private cdr = inject(ChangeDetectorRef);
 
-  notes = signal<Note[]>(INITIAL_NOTES);
-  activeNoteId = signal<string>(INITIAL_NOTES[0].id);
-  title = signal(INITIAL_NOTES[0].title);
-  content = signal(INITIAL_NOTES[0].content);
-  searchQuery = signal('');
-  isSaving = signal(false);
+  notes: Note[] = [...INITIAL_NOTES];
+  activeNoteId: string = INITIAL_NOTES[0].id;
+  title: string = INITIAL_NOTES[0].title;
+  content: string = INITIAL_NOTES[0].content;
+  searchQuery: string = '';
+  isSaving: boolean = false;
 
-  filteredNotes = computed(() => {
-    const q = this.searchQuery().toLowerCase().trim();
-    if (!q) return this.notes();
-    return this.notes().filter(
+  get filteredNotes(): Note[] {
+    const q = this.searchQuery.toLowerCase().trim();
+    if (!q) return this.notes;
+    return this.notes.filter(
       (n) => n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q),
     );
-  });
+  }
 
   ngOnInit() {
-    setTimeout(() => {
-      this.cdr.detectChanges();
-    });
+    setTimeout(() => this.cdr.detectChanges(), 0);
 
     this.route.queryParams.subscribe((params) => {
       const weekId = params['week'];
       if (!weekId) return;
 
-      const existing = this.notes().find((n) => n.weekId === weekId);
+      const existing = this.notes.find((n) => n.weekId === weekId);
       if (existing) {
         this.selectNote(existing);
       } else {
@@ -156,38 +161,31 @@ export class NotesComponent implements OnInit {
             content: `# Week ${week.weekNumber}: ${week.theme}\n\n${week.description}\n\n## 학습 목표\n${week.tasks.map((t) => `- ${t.title}`).join('\n')}\n\n## 메모\n\n여기에 내용을 작성해보세요...`,
             updatedAt: new Date().toISOString(),
           };
-          this.notes.update((ns) => [newNote, ...ns]);
+          this.notes = [newNote, ...this.notes];
           this.selectNote(newNote);
           this.toast.show(`Week ${week.weekNumber} 노트를 새로 만들었습니다`, 'success');
         }
       }
-      setTimeout(() => this.cdr.detectChanges());
+      setTimeout(() => this.cdr.detectChanges(), 0);
     });
   }
 
   selectNote(note: Note) {
-    this.activeNoteId.set(note.id);
-    this.title.set(note.title);
-    this.content.set(note.content);
-    setTimeout(() => this.cdr.detectChanges());
+    this.activeNoteId = note.id;
+    this.title = note.title;
+    this.content = note.content;
+    setTimeout(() => this.cdr.detectChanges(), 0);
   }
 
   save() {
-    this.isSaving.set(true);
+    this.isSaving = true;
     setTimeout(() => {
-      this.notes.update((ns) =>
-        ns.map((n) =>
-          n.id === this.activeNoteId()
-            ? {
-                ...n,
-                title: this.title(),
-                content: this.content(),
-                updatedAt: new Date().toISOString(),
-              }
-            : n,
-        ),
+      this.notes = this.notes.map((n) =>
+        n.id === this.activeNoteId
+          ? { ...n, title: this.title, content: this.content, updatedAt: new Date().toISOString() }
+          : n,
       );
-      this.isSaving.set(false);
+      this.isSaving = false;
       this.toast.show('노트가 저장되었습니다', 'success');
       this.cdr.detectChanges();
     }, 400);
@@ -201,28 +199,16 @@ export class NotesComponent implements OnInit {
       content: '# 새로운 학습 노트\n\n여기에 내용을 작성하세요...',
       updatedAt: new Date().toISOString(),
     };
-    this.notes.update((ns) => [note, ...ns]);
+    this.notes = [note, ...this.notes];
     this.selectNote(note);
   }
 
-  weekLabel(weekId: string) {
+  weekLabel(weekId: string): string {
     const week = WEEKS.find((w) => w.id === weekId);
     return week ? `W${week.weekNumber}` : '';
   }
 
-  formatDate(dateStr: string) {
+  formatDate(dateStr: string): string {
     return new Date(dateStr).toLocaleDateString('ko-KR');
-  }
-
-  onTitleChange(e: Event) {
-    this.title.set((e.target as HTMLInputElement).value);
-  }
-
-  onContentChange(e: Event) {
-    this.content.set((e.target as HTMLTextAreaElement).value);
-  }
-
-  onSearchChange(e: Event) {
-    this.searchQuery.set((e.target as HTMLInputElement).value);
   }
 }

@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { Component, ChangeDetectorRef, inject } from '@angular/core';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { LucideAngularModule } from 'lucide-angular';
 import { ToastComponent } from '../toast/toast';
 
@@ -10,6 +11,8 @@ import { ToastComponent } from '../toast/toast';
   templateUrl: './layout.html',
 })
 export class LayoutComponent {
+  private cdr = inject(ChangeDetectorRef);
+
   navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: 'layout-dashboard' },
     { path: '/roadmap', label: 'Roadmap', icon: 'map' },
@@ -20,7 +23,11 @@ export class LayoutComponent {
 
   hideNavPaths = ['/login', '/onboarding', '/generating'];
 
-  constructor(public router: Router) {}
+  constructor(public router: Router) {
+    this.router.events.pipe(filter((e) => e instanceof NavigationEnd)).subscribe(() => {
+      setTimeout(() => this.cdr.detectChanges(), 0);
+    });
+  }
 
   get shouldHideNav(): boolean {
     return this.hideNavPaths.some((p) => this.router.url.startsWith(p));
