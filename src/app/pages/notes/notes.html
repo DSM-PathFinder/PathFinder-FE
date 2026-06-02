@@ -1,0 +1,108 @@
+<div class="flex h-screen overflow-hidden bg-slate-50">
+  <div class="w-80 shrink-0 bg-white border-r border-slate-200 flex flex-col">
+    <div class="p-4 border-b border-slate-200 shrink-0">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-display font-bold text-xl text-slate-900">학습 노트</h2>
+        <button
+          (click)="newNote()"
+          class="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
+        >
+          <lucide-icon name="plus" [size]="20" />
+        </button>
+      </div>
+
+      <div class="relative">
+        <div class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+          <lucide-icon name="search" [size]="14" />
+        </div>
+        <input
+          type="text"
+          [value]="searchQuery()"
+          (input)="onSearchChange($event)"
+          placeholder="노트 검색..."
+          class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+        />
+      </div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-2 space-y-1">
+      @if (filteredNotes().length === 0) {
+        <div class="text-center text-sm text-slate-400 py-8">검색 결과가 없습니다</div>
+      }
+      @for (note of filteredNotes(); track note.id) {
+        <button
+          (click)="selectNote(note)"
+          [class]="
+            activeNoteId() === note.id
+              ? 'w-full text-left p-3 rounded-xl border bg-indigo-50 border-indigo-100'
+              : 'w-full text-left p-3 rounded-xl border border-transparent hover:bg-slate-50'
+          "
+        >
+          <h3
+            [class]="
+              activeNoteId() === note.id
+                ? 'font-medium truncate mb-1 text-indigo-900'
+                : 'font-medium truncate mb-1 text-slate-700'
+            "
+          >
+            {{ note.title }}
+          </h3>
+          <div class="flex items-center justify-between gap-2 text-xs text-slate-500">
+            <span class="flex items-center gap-1.5">
+              <lucide-icon name="clock" [size]="12" />
+              {{ formatDate(note.updatedAt) }}
+            </span>
+            @if (weekLabel(note.weekId)) {
+              <span
+                class="flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 rounded text-[10px] font-medium"
+              >
+                <lucide-icon name="map" [size]="10" />
+                {{ weekLabel(note.weekId) }}
+              </span>
+            }
+          </div>
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <div
+      class="h-16 shrink-0 bg-white border-b border-slate-200 flex items-center justify-between px-6"
+    >
+      <input
+        type="text"
+        [value]="title()"
+        (input)="onTitleChange($event)"
+        placeholder="노트 제목"
+        class="text-xl font-bold text-slate-900 bg-transparent border-none focus:outline-none focus:ring-0 flex-1 mr-4"
+      />
+      <button
+        (click)="save()"
+        [disabled]="isSaving()"
+        class="shrink-0 flex items-center gap-2 px-4 py-2 bg-indigo-900 text-white rounded-lg hover:bg-indigo-800 transition-colors text-sm font-medium disabled:opacity-70"
+      >
+        <lucide-icon name="save" [size]="16" />
+        {{ isSaving() ? '저장 중...' : '저장하기' }}
+      </button>
+    </div>
+
+    <div class="flex-1 flex overflow-hidden">
+      <div class="flex-1 border-r border-slate-200 bg-white overflow-y-auto">
+        <textarea
+          [value]="content()"
+          (input)="onContentChange($event)"
+          class="w-full h-full p-6 resize-none bg-transparent border-none focus:outline-none focus:ring-0 text-slate-700 font-mono text-sm leading-relaxed"
+          placeholder="마크다운으로 학습 내용을 작성해보세요..."
+        >
+        </textarea>
+      </div>
+
+      <div class="flex-1 bg-slate-50 overflow-y-auto">
+        <div class="markdown p-6 md:p-8 max-w-2xl mx-auto">
+          <markdown [data]="content()" />
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
