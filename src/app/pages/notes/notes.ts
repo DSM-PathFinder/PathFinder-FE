@@ -10,6 +10,7 @@ import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { MarkdownModule } from 'ngx-markdown';
 import { ToastService } from '../../components/toast/toast.service';
+import hljs from 'highlight.js';
 
 interface Note {
   id: string;
@@ -210,5 +211,11 @@ export class NotesComponent implements OnInit {
 
   formatDate(dateStr: string): string {
     return new Date(dateStr).toLocaleDateString('ko-KR');
+  }
+
+  ngAfterViewChecked() {
+    document.querySelectorAll('pre code').forEach((el) => {
+      hljs.highlightElement(el as HTMLElement);
+    });
   }
 }
