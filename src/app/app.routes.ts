@@ -38,6 +38,11 @@ export const routes: Routes = [
         path: 'my',
         loadComponent: () => import('./pages/my-page/my-page').then((m) => m.MyPageComponent),
       },
+      {
+        path: 'community',
+        loadComponent: () =>
+          import('./pages/community/community').then((m) => m.CommunityComponent),
+      },
     ],
   },
 ];
