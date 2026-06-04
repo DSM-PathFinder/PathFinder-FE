@@ -5,11 +5,12 @@
   >
     <div
       [class]="
-        'bg-white rounded-3xl shadow-2xl w-full my-auto relative max-h-[90vh] flex flex-col animate-scale-in ' +
+        'bg-white rounded-3xl shadow-2xl w-full my-auto relative max-h-[90vh] flex flex-col ' +
         maxWidth
       "
       (click)="$event.stopPropagation()"
     >
+      <!-- 타이틀 있을 때 -->
       @if (title) {
         <div class="flex items-center justify-between p-6 border-b border-slate-100 shrink-0">
           <h3 class="text-xl font-bold text-slate-900">{{ title }}</h3>
@@ -22,16 +23,17 @@
         </div>
       }
 
+      <!-- 타이틀 없을 때: 오른쪽 상단 고정 -->
       @if (!title) {
         <button
           (click)="close.emit()"
-          class="absolute top-4 right-4 z-10 text-slate-400 hover:text-slate-700 transition-colors p-2 rounded-lg hover:bg-slate-100"
+          class="absolute top-4 right-4 z-20 w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors"
         >
-          <lucide-icon name="x" [size]="20" />
+          <lucide-icon name="x" [size]="18" />
         </button>
       }
 
-      <div class="overflow-y-auto flex-1">
+      <div class="overflow-y-auto flex-1 rounded-3xl">
         <ng-content />
       </div>
     </div>
