@@ -43,6 +43,8 @@ import {
   ChevronRight,
   Heart,
   Plus,
+  Search,
+  MessageCircle,
 } from 'lucide-angular';
 
 export const appConfig: ApplicationConfig = {
@@ -90,6 +92,8 @@ export const appConfig: ApplicationConfig = {
         Bell,
         Github,
         Heart,
+        Search,
+        MessageCircle,
       }),
     ),
   ],
