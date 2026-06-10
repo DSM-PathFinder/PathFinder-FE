@@ -43,6 +43,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./pages/community/community').then((m) => m.CommunityComponent),
       },
+      {
+        path: 'auth/callback',
+        loadComponent: () =>
+          import('./pages/auth-callback/auth-callback').then((m) => m.AuthCallbackComponent),
+      },
     ],
   },
 ];
