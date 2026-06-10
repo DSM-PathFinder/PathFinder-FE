@@ -1,8 +1,9 @@
 import { ApplicationConfig, importProvidersFrom } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideMarkdown } from 'ngx-markdown';
+import { authInterceptor } from './interceptors/auth.interceptor';
 import {
   LucideAngularModule,
   AlertCircle,
@@ -50,7 +51,7 @@ import {
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
-    provideHttpClient(),
+    provideHttpClient(withInterceptors([authInterceptor])),
     provideMarkdown(),
     importProvidersFrom(
       LucideAngularModule.pick({
