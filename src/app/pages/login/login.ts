@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
-import { Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
+import { AuthService } from '../../services/auth';
 
 @Component({
   selector: 'app-login',
@@ -9,9 +9,13 @@ import { LucideAngularModule } from 'lucide-angular';
   templateUrl: './login.html',
 })
 export class LoginComponent {
-  constructor(private router: Router) {}
+  constructor(private authService: AuthService) {}
 
-  handleLogin() {
-    this.router.navigate(['/onboarding']);
+  loginWithGoogle() {
+    this.authService.loginWithGoogle();
+  }
+
+  loginWithGithub() {
+    this.authService.loginWithGithub();
   }
 }
