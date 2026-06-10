@@ -1,0 +1,92 @@
+import { Injectable, signal } from '@angular/core';
+import { Router } from '@angular/router';
+import { tap } from 'rxjs/operators';
+import { ApiService } from './api';
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  plan: string;
+  bio?: string;
+  provider: string;
+}
+
+@Injectable({ providedIn: 'root' })
+export class AuthService {
+  currentUser = signal<User | null>(null);
+  isLoggedIn = signal(false);
+
+  constructor(
+    private api: ApiService,
+    private router: Router,
+  ) {
+    // 앱 시작 시 토큰 있으면 자동 로그인
+    this.initFromToken();
+  }
+
+  private initFromToken() {
+    const token = localStorage.getItem('access_token');
+    if (!token) return;
+
+    this.api.get<User>('/auth/me').subscribe({
+      next: (user) => {
+        this.currentUser.set(user);
+        this.isLoggedIn.set(true);
+      },
+      error: () => {
+        this.logout();
+      },
+    });
+  }
+
+  // OAuth 콜백에서 토큰 받아서 저장
+  handleOAuthCallback(token: string) {
+    localStorage.setItem('access_token', token);
+    this.api.get<User>('/auth/me').subscribe({
+      next: (user) => {
+        this.currentUser.set(user);
+        this.isLoggedIn.set(true);
+        this.router.navigate(['/dashboard']);
+      },
+      error: () => {
+        this.logout();
+        this.router.navigate(['/login']);
+      },
+    });
+  }
+
+  // Google 로그인 → 서버로 리디렉션
+  loginWithGoogle() {
+    window.location.href = 'http://localhost:3000/api/auth/google';
+  }
+
+  // GitHub 로그인 → 서버로 리디렉션
+  loginWithGithub() {
+    window.location.href = 'http://localhost:3000/api/auth/github';
+  }
+
+  // 내 정보 조회
+  getMe() {
+    return this.api.get<User>('/auth/me').pipe(
+      tap((user) => {
+        this.currentUser.set(user);
+        this.isLoggedIn.set(true);
+      }),
+    );
+  }
+
+  // 프로필 수정
+  updateProfile(data: { name?: string; bio?: string }) {
+    return this.api
+      .patch<User>('/auth/profile', data)
+      .pipe(tap((user) => this.currentUser.set(user)));
+  }
+
+  logout() {
+    localStorage.removeItem('access_token');
+    this.currentUser.set(null);
+    this.isLoggedIn.set(false);
+    this.router.navigate(['/login']);
+  }
+}
