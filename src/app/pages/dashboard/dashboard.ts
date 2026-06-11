@@ -1,17 +1,20 @@
-import { Component, OnInit, signal, computed, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, signal, computed, ChangeDetectorRef, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { BaseChartDirective } from 'ng2-charts';
-import { ChartData, ChartOptions, Chart, LineController } from 'chart.js';
+import { ChartData, ChartOptions, Chart } from 'chart.js';
 import {
   CategoryScale,
   LinearScale,
   PointElement,
   LineElement,
+  LineController,
   Filler,
   Tooltip,
   Legend,
 } from 'chart.js';
+import { RoadmapService, Roadmap, Task } from '../../services/roadmap';
+import { AuthService } from '../../services/auth';
 import { ToastService } from '../../components/toast/toast.service';
 
 Chart.register(
@@ -25,12 +28,6 @@ Chart.register(
   Legend,
 );
 
-interface Task {
-  id: string;
-  title: string;
-  completed: boolean;
-}
-
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -38,25 +35,33 @@ interface Task {
   templateUrl: './dashboard.html',
 })
 export class DashboardComponent implements OnInit {
+  private roadmapService = inject(RoadmapService);
+  private authService = inject(AuthService);
+  private toast = inject(ToastService);
+  private cdr = inject(ChangeDetectorRef);
+
+  roadmap: Roadmap | null = null;
+  tasks: Task[] = [];
+  isLoading = true;
   showReplanModal = false;
   replanState: 'loading' | 'done' | null = null;
 
-  currentWeek = {
-    weekNumber: 1,
-    theme: 'JavaScript 핵심 개념 다지기',
-    description:
-      'React를 배우기 전 필수적인 모던 자바스크립트(ES6+) 문법과 동작 원리를 이해합니다.',
-  };
+  get currentUser() {
+    return this.authService.currentUser();
+  }
 
-  tasks = signal<Task[]>([
-    { id: 't1', title: 'ES6+ 문법 (Arrow functions, Destructuring, Spread)', completed: true },
-    { id: 't2', title: '비동기 처리 (Promise, async/await)', completed: true },
-    { id: 't3', title: '실행 컨텍스트와 클로저 이해하기', completed: false },
-  ]);
-
-  completedCount = computed(() => this.tasks().filter((t) => t.completed).length);
-  progressPct = computed(() => Math.round((this.completedCount() / this.tasks().length) * 100));
-  strokeDasharray = computed(() => `${this.progressPct()}, 100`);
+  get currentWeek() {
+    return this.roadmap?.weeks[0] ?? null;
+  }
+  get completedCount() {
+    return this.tasks.filter((t) => t.completed).length;
+  }
+  get progressPct() {
+    return this.tasks.length ? Math.round((this.completedCount / this.tasks.length) * 100) : 0;
+  }
+  get strokeDasharray() {
+    return `${this.progressPct}, 100`;
+  }
 
   chartData: ChartData<'line'> = {
     labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
@@ -116,28 +121,71 @@ export class DashboardComponent implements OnInit {
     },
   };
 
-  constructor(
-    private toast: ToastService,
-    private cdr: ChangeDetectorRef,
-  ) {}
-
   ngOnInit() {
-    this.cdr.detectChanges();
+    this.loadRoadmap();
   }
 
-  toggleTask(id: string) {
-    this.tasks.update((tasks) =>
-      tasks.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)),
-    );
+  loadRoadmap() {
+    this.isLoading = true;
+    this.roadmapService.getAll().subscribe({
+      next: (roadmaps) => {
+        if (roadmaps.length > 0) {
+          const latestId = localStorage.getItem('latest_roadmap_id');
+          this.roadmap = latestId
+            ? (roadmaps.find((r) => r.id === latestId) ?? roadmaps[0])
+            : roadmaps[0];
+          this.tasks = [...(this.roadmap.weeks[0]?.tasks ?? [])];
+        }
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  toggleTask(taskId: string) {
+    this.roadmapService.toggleTask(taskId).subscribe({
+      next: (updated) => {
+        this.tasks = this.tasks.map((t) =>
+          t.id === taskId ? { ...t, completed: updated.completed } : t,
+        );
+        this.cdr.detectChanges();
+      },
+      error: () => this.toast.show('태스크 업데이트에 실패했습니다', 'error'),
+    });
   }
 
   handleReplan() {
+    if (!this.roadmap) return;
     this.showReplanModal = true;
     this.replanState = 'loading';
-    setTimeout(() => {
-      this.replanState = 'done';
-      this.cdr.detectChanges();
-    }, 2000);
+
+    const completedTaskIds = this.tasks.filter((t) => t.completed).map((t) => t.id);
+    const currentWeekNum = this.roadmap.weeks[0]?.weekNumber ?? 1;
+    const remainingWeeks = this.roadmap.weeks.length - currentWeekNum + 1;
+
+    this.roadmapService
+      .replan({
+        roadmapId: this.roadmap.id,
+        currentWeek: currentWeekNum,
+        completedTasks: completedTaskIds,
+        remainingWeeks,
+      })
+      .subscribe({
+        next: (updated) => {
+          this.roadmap = updated;
+          this.tasks = [...(updated.weeks[0]?.tasks ?? [])];
+          this.replanState = 'done';
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.toast.show('일정 재설정에 실패했습니다', 'error');
+          this.closeReplan();
+        },
+      });
   }
 
   closeReplan() {
