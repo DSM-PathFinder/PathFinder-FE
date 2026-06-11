@@ -9,8 +9,6 @@ import { LucideAngularModule } from 'lucide-angular';
   templateUrl: './generating.html',
 })
 export class GeneratingComponent implements OnInit, OnDestroy {
-  private timer: ReturnType<typeof setTimeout> | null = null;
-
   steps = [
     { icon: 'target', text: '목표 달성을 위한 핵심 기술 스택 분석 중...' },
     { icon: 'book-open', text: '수준에 맞는 최적의 강의 및 문서 선별 중...' },
@@ -18,22 +16,21 @@ export class GeneratingComponent implements OnInit, OnDestroy {
   ];
 
   visibleSteps: boolean[] = [false, false, false];
-
-  constructor(private router: Router) {}
+  private timers: ReturnType<typeof setTimeout>[] = [];
 
   ngOnInit() {
     this.steps.forEach((_, i) => {
-      setTimeout(
+      const t = setTimeout(
         () => {
           this.visibleSteps[i] = true;
         },
         600 + i * 900,
       );
+      this.timers.push(t);
     });
-    this.timer = setTimeout(() => this.router.navigate(['/dashboard']), 4000);
   }
 
   ngOnDestroy() {
-    if (this.timer) clearTimeout(this.timer);
+    this.timers.forEach((t) => clearTimeout(t));
   }
 }
