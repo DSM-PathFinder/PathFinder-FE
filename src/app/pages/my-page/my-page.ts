@@ -1,24 +1,11 @@
-import { Component, signal, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, signal, inject, ChangeDetectorRef } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { ModalComponent } from '../../components/modal/modal';
+import { AuthService } from '../../services/auth';
+import { RoadmapService, Roadmap } from '../../services/roadmap';
 import { ToastService } from '../../components/toast/toast.service';
-
-interface Profile {
-  name: string;
-  email: string;
-  bio: string;
-}
-
-interface MyRoadmap {
-  id: string;
-  title: string;
-  goal: string;
-  weeks: number;
-  isPublic: boolean;
-  progress: number;
-}
 
 @Component({
   selector: 'app-my-page',
@@ -26,7 +13,9 @@ interface MyRoadmap {
   imports: [RouterLink, FormsModule, LucideAngularModule, ModalComponent],
   templateUrl: './my-page.html',
 })
-export class MyPageComponent {
+export class MyPageComponent implements OnInit {
+  private authService = inject(AuthService);
+  private roadmapService = inject(RoadmapService);
   private toast = inject(ToastService);
   private cdr = inject(ChangeDetectorRef);
 
@@ -35,16 +24,16 @@ export class MyPageComponent {
   notifications = signal(true);
   publicProfile = signal(true);
 
-  profile = signal<Profile>({
-    name: 'User Name',
-    email: 'user@pathfinder.app',
-    bio: '풀스택 개발자를 꿈꾸는 학습자입니다.',
-  });
+  myRoadmaps: Roadmap[] = [];
+  isLoading = true;
 
-  // 편집용 임시 값
   editName = '';
   editEmail = '';
   editBio = '';
+
+  get currentUser() {
+    return this.authService.currentUser();
+  }
 
   stats = [
     {
@@ -58,42 +47,47 @@ export class MyPageComponent {
     { label: '받은 좋아요', value: '127', icon: 'heart', color: 'text-rose-600 bg-rose-50' },
   ];
 
-  myRoadmaps: MyRoadmap[] = [
-    {
-      id: 'rm_1',
-      title: 'Frontend Developer Path',
-      goal: '풀스택 개발자 취업 (React & Node.js)',
-      weeks: 4,
-      isPublic: true,
-      progress: 35,
-    },
-    {
-      id: 'rm_2',
-      title: 'TypeScript 마스터',
-      goal: '타입스크립트 깊이 이해하기',
-      weeks: 8,
-      isPublic: false,
-      progress: 10,
-    },
-  ];
+  ngOnInit() {
+    this.loadRoadmaps();
+  }
+
+  loadRoadmaps() {
+    this.isLoading = true;
+    this.roadmapService.getAll().subscribe({
+      next: (roadmaps) => {
+        this.myRoadmaps = roadmaps;
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
 
   openEdit() {
-    const p = this.profile();
-    this.editName = p.name;
-    this.editEmail = p.email;
-    this.editBio = p.bio;
+    const user = this.currentUser;
+    this.editName = user?.name ?? '';
+    this.editEmail = user?.email ?? '';
+    this.editBio = user?.bio ?? '';
     this.editOpen.set(true);
   }
 
   saveProfile() {
-    this.profile.set({
-      name: this.editName,
-      email: this.editEmail,
-      bio: this.editBio,
-    });
-    this.editOpen.set(false);
-    this.toast.show('프로필이 업데이트되었습니다', 'success');
-    this.cdr.detectChanges();
+    this.authService
+      .updateProfile({
+        name: this.editName,
+        bio: this.editBio,
+      })
+      .subscribe({
+        next: () => {
+          this.editOpen.set(false);
+          this.toast.show('프로필이 업데이트되었습니다', 'success');
+          this.cdr.detectChanges();
+        },
+        error: () => this.toast.show('프로필 업데이트에 실패했습니다', 'error'),
+      });
   }
 
   toggleNotifications() {
@@ -107,5 +101,10 @@ export class MyPageComponent {
       this.publicProfile() ? '프로필이 공개로 변경되었습니다' : '프로필이 비공개로 변경되었습니다',
       'info',
     );
+  }
+
+  logout() {
+    this.logoutOpen.set(false);
+    this.authService.logout();
   }
 }
