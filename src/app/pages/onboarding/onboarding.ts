@@ -2,6 +2,8 @@ import { Component } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { RoadmapService } from '../../services/roadmap';
+import { ToastService } from '../../components/toast/toast.service';
 
 @Component({
   selector: 'app-onboarding',
@@ -11,6 +13,7 @@ import { Router } from '@angular/router';
 })
 export class OnboardingComponent {
   step = 1;
+  isLoading = false;
 
   formData = {
     level: '',
@@ -66,7 +69,11 @@ export class OnboardingComponent {
     },
   ];
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private roadmapService: RoadmapService,
+    private toast: ToastService,
+  ) {}
 
   get progressWidth() {
     return `${this.step / 4}*100%`;
@@ -92,7 +99,7 @@ export class OnboardingComponent {
 
   next() {
     if (this.step < 4) this.step++;
-    else this.router.navigate(['/generating']);
+    else this.generate();
   }
 
   back() {
@@ -112,6 +119,28 @@ export class OnboardingComponent {
 
   isInterestSelected(i: string) {
     return this.formData.selectedInterests.includes(i);
+  }
+
+  onHoursChange(v: number) {
+    this.formData.hours = v;
+  }
+
+  private generate() {
+    this.isLoading = true;
+    this.router.navigate(['/generating']);
+
+    this.roadmapService.generateWithAI(this.formData).subscribe({
+      next: (roadmap) => {
+        localStorage.setItem('latest_roadmap_id', roadmap.id);
+        this.router.navigate(['/roadmap']);
+      },
+      error: (err) => {
+        console.log(err);
+        this.toast.show('로드맵 생성에 실패했습니다. 다시 시도해주세요.', 'error');
+        this.router.navigate(['/onboarding']);
+        this.isLoading = false;
+      },
+    });
   }
 
   get sliderPct() {
