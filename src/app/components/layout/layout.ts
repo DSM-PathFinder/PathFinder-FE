@@ -3,6 +3,7 @@ import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } fro
 import { filter } from 'rxjs/operators';
 import { LucideAngularModule } from 'lucide-angular';
 import { ToastComponent } from '../toast/toast';
+import { AuthService } from '../../services/auth';
 
 @Component({
   selector: 'app-layout',
@@ -23,7 +24,10 @@ export class LayoutComponent {
 
   hideNavPaths = ['/login', '/onboarding', '/generating'];
 
-  constructor(public router: Router) {
+  constructor(
+    public router: Router,
+    private authService: AuthService,
+  ) {
     this.router.events.pipe(filter((e) => e instanceof NavigationEnd)).subscribe(() => {
       setTimeout(() => this.cdr.detectChanges(), 0);
     });
@@ -31,5 +35,9 @@ export class LayoutComponent {
 
   get shouldHideNav(): boolean {
     return this.hideNavPaths.some((p) => this.router.url.startsWith(p));
+  }
+
+  logout() {
+    this.authService.logout();
   }
 }
