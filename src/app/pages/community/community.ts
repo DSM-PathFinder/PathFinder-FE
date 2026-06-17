@@ -26,11 +26,8 @@ export class CommunityComponent implements OnInit {
 
   get filteredPosts(): CommunityRoadmap[] {
     return this.posts.filter((p) => {
-      const catMatch = this.activeCategory === 'All';
       const q = this.searchQuery.toLowerCase();
-      const searchMatch =
-        !q || p.title.toLowerCase().includes(q) || p.goal.toLowerCase().includes(q);
-      return catMatch && searchMatch;
+      return !q || p.title.toLowerCase().includes(q) || p.goal.toLowerCase().includes(q);
     });
   }
 
@@ -56,7 +53,6 @@ export class CommunityComponent implements OnInit {
   openPost(post: CommunityRoadmap) {
     this.activePost = post;
   }
-
   closePost() {
     this.activePost = null;
   }

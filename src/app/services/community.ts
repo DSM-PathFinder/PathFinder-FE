@@ -1,10 +1,21 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api';
-import { Roadmap } from './roadmap';
+import { Week } from './roadmap';
 
-export interface CommunityRoadmap extends Roadmap {
-  user: { id: string; name: string; plan: string };
+export interface CommunityRoadmap {
+  id: string;
+  title: string;
+  goal: string;
+  isPublic: boolean;
+  weeks: Week[];
+  user: {
+    id: string;
+    name: string;
+    plan: string;
+  };
   _count: { likes: number };
+  createdAt: string;
+  updatedAt: string;
 }
 
 @Injectable({ providedIn: 'root' })

@@ -19,7 +19,6 @@
         </button>
       }
     </div>
-
     <div class="relative w-full md:w-72">
       <div class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
         <lucide-icon name="search" [size]="18" color="#94a3b8" />
@@ -33,77 +32,85 @@
     </div>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    @for (post of filteredPosts; track post.id) {
-      <button
-        (click)="openPost(post)"
-        class="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all group text-left flex flex-col h-full"
-      >
-        <div class="flex items-center justify-between gap-3 mb-5">
-          <div class="min-w-0">
-            <p class="font-bold text-slate-900 text-sm truncate">{{ post.user.name }}</p>
-            <p class="text-xs text-slate-500 truncate">{{ post.user.role }}</p>
-          </div>
-          <div
-            class="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-medium shrink-0"
-          >
-            {{ post.category }}
-          </div>
-        </div>
-
-        <div class="flex-1 mb-6">
-          <h3
-            class="text-xl font-bold text-slate-900 mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2"
-          >
-            {{ post.roadmapTitle }}
-          </h3>
-          <p class="text-slate-500 text-sm mb-4 line-clamp-2">목표: {{ post.goal }}</p>
-          <div
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-sm font-medium"
-          >
-            <lucide-icon name="map" [size]="16" />
-            총 {{ post.weekCount }}주 과정
-          </div>
-        </div>
-
-        <div class="flex items-center justify-between pt-4 border-t border-slate-100">
-          <div class="flex items-center gap-4">
-            <span
-              (click)="toggleLike(post.id, $event)"
-              [class]="
-                isLiked(post.id)
-                  ? 'flex items-center gap-1.5 text-rose-500 cursor-pointer'
-                  : 'flex items-center gap-1.5 text-slate-500 hover:text-rose-500 cursor-pointer transition-colors'
-              "
-            >
-              <lucide-icon
-                name="heart"
-                [size]="16"
-                [style.fill]="isLiked(post.id) ? 'currentColor' : 'none'"
-              />
-              <span class="text-sm font-medium">{{ likeCount(post) }}</span>
-            </span>
-            <span class="flex items-center gap-1.5 text-slate-500">
-              <lucide-icon name="message-circle" [size]="16" />
-              <span class="text-sm font-medium">댓글</span>
-            </span>
-          </div>
-          <lucide-icon name="share-2" [size]="16" color="#94a3b8" />
-        </div>
-      </button>
-    }
-  </div>
-
-  @if (filteredPosts.length === 0) {
-    <div class="text-center py-20">
-      <div
-        class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4"
-      >
-        <lucide-icon name="search" [size]="32" color="#94a3b8" />
-      </div>
-      <h3 class="text-lg font-bold text-slate-900 mb-1">검색 결과가 없습니다</h3>
-      <p class="text-slate-500">다른 검색어나 필터를 시도해보세요.</p>
+  @if (isLoading) {
+    <div class="flex items-center justify-center py-20">
+      <lucide-icon name="loader" [size]="32" color="#6366f1" class="animate-spin" />
     </div>
+  }
+
+  @if (!isLoading) {
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      @for (post of filteredPosts; track post.id) {
+        <button
+          (click)="openPost(post)"
+          class="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all group text-left flex flex-col h-full"
+        >
+          <div class="flex items-center justify-between gap-3 mb-5">
+            <div class="min-w-0">
+              <p class="font-bold text-slate-900 text-sm truncate">{{ post.user.name }}</p>
+              <p class="text-xs text-slate-500 truncate">{{ post.user.plan }}</p>
+            </div>
+            <div
+              class="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-medium shrink-0"
+            >
+              {{ post.weeks.length }}주
+            </div>
+          </div>
+
+          <div class="flex-1 mb-6">
+            <h3
+              class="text-xl font-bold text-slate-900 mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2"
+            >
+              {{ post.title }}
+            </h3>
+            <p class="text-slate-500 text-sm mb-4 line-clamp-2">목표: {{ post.goal }}</p>
+            <div
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-sm font-medium"
+            >
+              <lucide-icon name="map" [size]="16" />
+              총 {{ post.weeks.length }}주 과정
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+            <div class="flex items-center gap-4">
+              <span
+                (click)="toggleLike(post.id, $event)"
+                [class]="
+                  isLiked(post.id)
+                    ? 'flex items-center gap-1.5 text-rose-500 cursor-pointer'
+                    : 'flex items-center gap-1.5 text-slate-500 hover:text-rose-500 cursor-pointer transition-colors'
+                "
+              >
+                <lucide-icon
+                  name="heart"
+                  [size]="16"
+                  [style.fill]="isLiked(post.id) ? 'currentColor' : 'none'"
+                />
+                <span class="text-sm font-medium">{{ likeCount(post) }}</span>
+              </span>
+              <span class="flex items-center gap-1.5 text-slate-500">
+                <lucide-icon name="message-circle" [size]="16" />
+                <span class="text-sm font-medium">댓글</span>
+              </span>
+            </div>
+            <lucide-icon name="share-2" [size]="16" color="#94a3b8" />
+          </div>
+        </button>
+      }
+    </div>
+
+    @if (filteredPosts.length === 0) {
+      <div class="text-center py-20">
+        <div
+          class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4"
+        >
+          <lucide-icon name="search" [size]="32" color="#94a3b8" />
+        </div>
+        <h3 class="text-lg font-bold text-slate-900 mb-1">검색 결과가 없습니다</h3>
+        <p class="text-slate-500">다른 검색어나 필터를 시도해보세요.</p>
+      </div>
+    }
   }
 </div>
 
@@ -116,21 +123,26 @@
           class="absolute -bottom-10 -left-10 w-32 h-32 bg-indigo-500/30 rounded-full blur-2xl"
         ></div>
 
+        <button
+          (click)="closePost()"
+          class="absolute top-3 right-3 z-30 w-8 h-8 rounded-full bg-black/20 hover:bg-black/30 backdrop-blur-sm flex items-center justify-center text-white transition-colors"
+        >
+          <lucide-icon name="x" [size]="16" />
+        </button>
+
         <div class="relative z-10 text-white">
           <div class="flex items-center gap-2 mb-4 flex-wrap">
             <p class="font-bold">{{ activePost.user.name }}</p>
             <span class="text-indigo-300">·</span>
-            <p class="text-sm text-indigo-200">{{ activePost.user.role }}</p>
+            <p class="text-sm text-indigo-200">{{ activePost.user.plan }}</p>
             <span
               class="px-2 py-0.5 bg-white/10 backdrop-blur-sm text-white rounded-md text-xs font-medium border border-white/20 ml-1"
             >
-              {{ activePost.category }}
+              {{ activePost.weeks.length }}주 과정
             </span>
           </div>
 
-          <h2 class="font-display text-2xl md:text-3xl font-bold mb-2">
-            {{ activePost.roadmapTitle }}
-          </h2>
+          <h2 class="font-display text-2xl md:text-3xl font-bold mb-2">{{ activePost.title }}</h2>
           <p class="text-indigo-200 text-sm flex items-center gap-2 mb-6">
             <lucide-icon name="target" [size]="16" />
             {{ activePost.goal }}
@@ -140,7 +152,7 @@
             <div
               class="px-3 py-1.5 bg-white/10 backdrop-blur-sm rounded-lg text-sm font-medium border border-white/10"
             >
-              총 {{ activePost.weekCount }}주
+              총 {{ activePost.weeks.length }}주
             </div>
             <div
               class="px-3 py-1.5 bg-white/10 backdrop-blur-sm rounded-lg text-sm font-medium border border-white/10"
@@ -154,7 +166,7 @@
       <div class="p-6 md:p-8 space-y-4">
         <h3 class="font-bold text-slate-900 text-sm uppercase tracking-wider mb-4">학습 로드맵</h3>
 
-        @for (week of displayWeeks; track week.id) {
+        @for (week of activePost.weeks; track week.id) {
           <div class="bg-slate-50 rounded-2xl p-5 border border-slate-100">
             <div class="flex items-start gap-4 mb-3">
               <div
