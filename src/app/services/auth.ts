@@ -9,7 +9,7 @@ export interface User {
   name: string;
   plan: string;
   bio?: string;
-  provider: string;
+  provider: 'google' | 'github' | 'local';
 }
 
 @Injectable({ providedIn: 'root' })
@@ -21,7 +21,6 @@ export class AuthService {
     private api: ApiService,
     private router: Router,
   ) {
-    // 앱 시작 시 토큰 있으면 자동 로그인
     this.initFromToken();
   }
 
@@ -34,13 +33,10 @@ export class AuthService {
         this.currentUser.set(user);
         this.isLoggedIn.set(true);
       },
-      error: () => {
-        this.logout();
-      },
+      error: () => this.logout(),
     });
   }
 
-  // OAuth 콜백에서 토큰 받아서 저장
   handleOAuthCallback(token: string) {
     localStorage.setItem('access_token', token);
     this.api.get<User>('/auth/me').subscribe({
@@ -56,17 +52,14 @@ export class AuthService {
     });
   }
 
-  // Google 로그인 → 서버로 리디렉션
   loginWithGoogle() {
     window.location.href = 'http://localhost:3000/api/auth/google';
   }
 
-  // GitHub 로그인 → 서버로 리디렉션
   loginWithGithub() {
     window.location.href = 'http://localhost:3000/api/auth/github';
   }
 
-  // 내 정보 조회
   getMe() {
     return this.api.get<User>('/auth/me').pipe(
       tap((user) => {
@@ -76,11 +69,14 @@ export class AuthService {
     );
   }
 
-  // 프로필 수정
   updateProfile(data: { name?: string; bio?: string }) {
     return this.api
       .patch<User>('/auth/profile', data)
-      .pipe(tap((user) => this.currentUser.set(user)));
+      .pipe(tap((user) => this.currentUser.set({ ...this.currentUser()!, ...user })));
+  }
+
+  refreshMe() {
+    return this.getMe();
   }
 
   logout() {

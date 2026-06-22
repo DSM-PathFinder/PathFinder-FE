@@ -6,13 +6,10 @@ export interface CommunityRoadmap {
   id: string;
   title: string;
   goal: string;
+  category: string;
   isPublic: boolean;
   weeks: Week[];
-  user: {
-    id: string;
-    name: string;
-    plan: string;
-  };
+  user: { id: string; name: string; plan: string };
   _count: { likes: number };
   createdAt: string;
   updatedAt: string;
@@ -22,8 +19,9 @@ export interface CommunityRoadmap {
 export class CommunityService {
   constructor(private api: ApiService) {}
 
-  getPublic() {
-    return this.api.get<CommunityRoadmap[]>('/community');
+  getPublic(category?: string) {
+    const query = category && category !== 'All' ? `?category=${encodeURIComponent(category)}` : '';
+    return this.api.get<CommunityRoadmap[]>(`/community${query}`);
   }
 
   toggleLike(roadmapId: string) {

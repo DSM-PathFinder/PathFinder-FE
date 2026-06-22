@@ -5,6 +5,7 @@ export interface Task {
   id: string;
   title: string;
   completed: boolean;
+  completedAt?: string | null;
 }
 
 export interface Resource {
@@ -20,6 +21,7 @@ export interface Week {
   theme: string;
   description: string;
   estimatedHours: number;
+  actualHours?: number;
   tasks: Task[];
   resources: Resource[];
 }
@@ -28,8 +30,10 @@ export interface Roadmap {
   id: string;
   title: string;
   goal: string;
+  category: string;
   isPublic: boolean;
   weeks: Week[];
+  _count?: { likes: number };
   createdAt: string;
   updatedAt: string;
 }
@@ -41,36 +45,53 @@ export interface OnboardingData {
   selectedInterests: string[];
 }
 
+export interface UserStats {
+  studiedHours: number;
+  overallProgress: number;
+  completedWeeks: number;
+  totalWeeks: number;
+  totalLikes: number;
+  streak: number;
+}
+
+export interface ChartPoint {
+  name: string;
+  hours: number;
+  expected: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class RoadmapService {
   constructor(private api: ApiService) {}
 
-  // 내 로드맵 목록
   getAll() {
     return this.api.get<Roadmap[]>('/roadmaps');
   }
 
-  // 로드맵 상세
   getOne(id: string) {
     return this.api.get<Roadmap>(`/roadmaps/${id}`);
   }
 
-  // 공개/비공개 토글
+  getStats() {
+    return this.api.get<UserStats>('/roadmaps/stats');
+  }
+
+  getChart(roadmapId: string) {
+    return this.api.get<ChartPoint[]>(`/roadmaps/${roadmapId}/chart`);
+  }
+
   togglePublic(id: string, isPublic: boolean) {
     return this.api.patch<Roadmap>(`/roadmaps/${id}`, { isPublic });
   }
 
-  // 로드맵 삭제
   remove(id: string) {
     return this.api.delete(`/roadmaps/${id}`);
   }
 
-  // 태스크 완료 토글
   toggleTask(taskId: string) {
     return this.api.patch<Task>(`/roadmaps/tasks/${taskId}/toggle`, {});
   }
 
-  // Claude AI로 로드맵 생성 (온보딩 데이터 전송)
   generateWithAI(data: OnboardingData) {
     return this.api.post<Roadmap>('/ai/generate-roadmap', {
       level: data.level,
@@ -80,7 +101,6 @@ export class RoadmapService {
     });
   }
 
-  // AI 일정 재조정
   replan(data: {
     roadmapId: string;
     currentWeek: number;

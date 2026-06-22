@@ -6,6 +6,7 @@ export interface Note {
   title: string;
   content: string;
   weekId?: string;
+  taskId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -22,7 +23,11 @@ export class NotesService {
     return this.api.get<Note>(`/notes/${id}`);
   }
 
-  create(data: { title: string; content?: string; weekId?: string }) {
+  getByTask(taskId: string) {
+    return this.api.get<Note | null>(`/notes/by-task/${taskId}`);
+  }
+
+  create(data: { title: string; content?: string; weekId?: string; taskId?: string }) {
     return this.api.post<Note>('/notes', data);
   }
 
