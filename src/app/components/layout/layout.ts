@@ -13,6 +13,7 @@ import { AuthService } from '../../services/auth';
 })
 export class LayoutComponent {
   private cdr = inject(ChangeDetectorRef);
+  authService = inject(AuthService);
 
   navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: 'layout-dashboard' },
@@ -24,10 +25,7 @@ export class LayoutComponent {
 
   hideNavPaths = ['/login', '/onboarding', '/generating'];
 
-  constructor(
-    public router: Router,
-    private authService: AuthService,
-  ) {
+  constructor(public router: Router) {
     this.router.events.pipe(filter((e) => e instanceof NavigationEnd)).subscribe(() => {
       setTimeout(() => this.cdr.detectChanges(), 0);
     });
@@ -35,6 +33,10 @@ export class LayoutComponent {
 
   get shouldHideNav(): boolean {
     return this.hideNavPaths.some((p) => this.router.url.startsWith(p));
+  }
+
+  get currentUser() {
+    return this.authService.currentUser();
   }
 
   logout() {
