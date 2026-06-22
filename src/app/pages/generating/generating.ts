@@ -1,5 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
@@ -16,7 +15,10 @@ export class GeneratingComponent implements OnInit, OnDestroy {
   ];
 
   visibleSteps: boolean[] = [false, false, false];
+  progress = 0;
+
   private timers: ReturnType<typeof setTimeout>[] = [];
+  private progressInterval: ReturnType<typeof setInterval> | null = null;
 
   ngOnInit() {
     this.steps.forEach((_, i) => {
@@ -24,13 +26,26 @@ export class GeneratingComponent implements OnInit, OnDestroy {
         () => {
           this.visibleSteps[i] = true;
         },
-        600 + i * 900,
+        600 + i * 1200,
       );
       this.timers.push(t);
     });
+
+    let current = 0;
+    this.progressInterval = setInterval(() => {
+      if (current < 90) {
+        current += Math.random() * 3;
+        this.progress = Math.min(current, 90);
+      }
+    }, 300);
+  }
+
+  complete() {
+    this.progress = 100;
   }
 
   ngOnDestroy() {
     this.timers.forEach((t) => clearTimeout(t));
+    if (this.progressInterval) clearInterval(this.progressInterval);
   }
 }
