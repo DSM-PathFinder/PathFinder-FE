@@ -1,13 +1,21 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
+import { RoadmapService } from '../../services/roadmap';
+import { ToastService } from '../../components/toast/toast.service';
+import { DecimalPipe } from '@angular/common';
 
 @Component({
   selector: 'app-generating',
   standalone: true,
-  imports: [LucideAngularModule],
+  imports: [LucideAngularModule, DecimalPipe],
   templateUrl: './generating.html',
 })
 export class GeneratingComponent implements OnInit, OnDestroy {
+  private router = inject(Router);
+  private roadmapService = inject(RoadmapService);
+  private toast = inject(ToastService);
+
   steps = [
     { icon: 'target', text: '목표 달성을 위한 핵심 기술 스택 분석 중...' },
     { icon: 'book-open', text: '수준에 맞는 최적의 강의 및 문서 선별 중...' },
@@ -26,22 +34,39 @@ export class GeneratingComponent implements OnInit, OnDestroy {
         () => {
           this.visibleSteps[i] = true;
         },
-        600 + i * 1200,
+        800 + i * 1200,
       );
       this.timers.push(t);
     });
 
-    let current = 0;
     this.progressInterval = setInterval(() => {
-      if (current < 90) {
-        current += Math.random() * 3;
-        this.progress = Math.min(current, 90);
+      if (this.progress < 85) {
+        this.progress += Math.random() * 2.5;
+        if (this.progress > 85) this.progress = 85;
       }
-    }, 300);
-  }
+    }, 400);
 
-  complete() {
-    this.progress = 100;
+    const raw = sessionStorage.getItem('onboarding_data');
+    if (!raw) {
+      this.router.navigate(['/onboarding']);
+      return;
+    }
+
+    const formData = JSON.parse(raw);
+
+    this.roadmapService.generateWithAI(formData).subscribe({
+      next: (roadmap) => {
+        this.progress = 100;
+        sessionStorage.removeItem('onboarding_data');
+        localStorage.setItem('latest_roadmap_id', roadmap.id);
+        const t = setTimeout(() => this.router.navigate(['/roadmap']), 600);
+        this.timers.push(t);
+      },
+      error: () => {
+        this.toast.show('로드맵 생성에 실패했습니다. 다시 시도해주세요.', 'error');
+        this.router.navigate(['/onboarding']);
+      },
+    });
   }
 
   ngOnDestroy() {

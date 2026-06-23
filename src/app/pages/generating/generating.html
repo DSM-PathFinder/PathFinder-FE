@@ -1,47 +1,64 @@
 <div
-  class="min-h-screen bg-slate-900 flex flex-col justify-center items-center p-4 relative overflow-hidden"
+  class="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-8 relative overflow-hidden"
 >
   <div
-    class="absolute top-1/4 left-1/4 w-125 h-125 rounded-full bg-indigo-600/20 blur-[100px] animate-pulse pointer-events-none"
+    class="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none"
   ></div>
   <div
-    class="absolute bottom-1/4 right-1/4 w-125 h-125 rounded-full bg-amber-500/10 blur-[100px] pointer-events-none"
+    class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-violet-600/20 rounded-full blur-3xl pointer-events-none"
   ></div>
 
-  <div class="relative z-10 flex flex-col items-center text-center max-w-md w-full animate-fade-up">
+  <div class="relative z-10 w-full max-w-lg text-center">
     <div
-      class="w-24 h-24 bg-white/10 backdrop-blur-md rounded-3xl flex items-center justify-center mb-8 border border-white/20 shadow-2xl animate-spin-slow"
+      class="w-20 h-20 bg-indigo-600 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-indigo-900/50"
     >
-      <lucide-icon name="compass" [size]="48" color="white" strokeWidth="1.5" />
+      <lucide-icon name="sparkles" [size]="36" color="white" />
     </div>
 
-    <h1 class="font-display text-3xl md:text-4xl font-bold text-white mb-4 leading-tight">
-      AI가 맞춤형 로드맵을<br />설계하고 있습니다
-    </h1>
-    <p class="text-indigo-200 text-lg mb-12 leading-relaxed">
-      입력하신 목표와 수준을 분석하여<br />최적의 학습 경로를 탐색 중입니다.
-    </p>
+    <h1 class="font-display text-3xl font-bold text-white mb-3">AI가 로드맵을 만들고 있어요</h1>
+    <p class="text-slate-400 mb-12">잠시만 기다려주세요, 맞춤형 학습 계획을 구성하고 있습니다</p>
 
-    <div class="w-full space-y-4 text-left">
-      @for (s of steps; track s.text; let i = $index) {
-        @if (visibleSteps[i]) {
+    <div class="space-y-4 mb-10 text-left">
+      @for (step of steps; track step.text; let i = $index) {
+        <div
+          [class]="
+            visibleSteps[i]
+              ? 'flex items-center gap-4 p-4 rounded-2xl bg-white/10 border border-white/10 backdrop-blur-sm opacity-100 translate-y-0 transition-all duration-500'
+              : 'flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 opacity-0 translate-y-4 transition-all duration-500'
+          "
+        >
           <div
-            class="flex items-center gap-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 animate-fade-left"
+            [class]="
+              visibleSteps[i]
+                ? 'w-10 h-10 rounded-xl bg-indigo-500 flex items-center justify-center shrink-0'
+                : 'w-10 h-10 rounded-xl bg-slate-700 flex items-center justify-center shrink-0'
+            "
           >
-            <div
-              class="w-9 h-9 rounded-full bg-indigo-500/20 flex items-center justify-center shrink-0"
-            >
-              <lucide-icon [name]="s.icon" [size]="18" color="#a5b4fc" strokeWidth="1.5" />
-            </div>
-            <span class="text-slate-300 font-medium text-sm flex-1">{{ s.text }}</span>
-            <span class="text-indigo-400 text-lg animate-pulse">···</span>
+            <lucide-icon [name]="step.icon" [size]="20" color="white" />
           </div>
-        }
+          <span [class]="visibleSteps[i] ? 'text-white font-medium' : 'text-slate-600 font-medium'">
+            {{ step.text }}
+          </span>
+          @if (visibleSteps[i]) {
+            <lucide-icon
+              name="check-circle-2"
+              [size]="20"
+              color="#34d399"
+              class="ml-auto shrink-0"
+            />
+          }
+        </div>
       }
     </div>
 
-    <div class="w-full mt-8 h-1 bg-white/10 rounded-full overflow-hidden">
-      <div class="h-full bg-indigo-400 rounded-full generating-progress"></div>
+    <div class="w-full bg-white/10 rounded-full h-3 overflow-hidden mb-3">
+      <div
+        class="h-full bg-linear-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-500 ease-out"
+        [style.width]="progress + '%'"
+      ></div>
     </div>
+    <p class="text-slate-400 text-sm">
+      {{ progress < 100 ? '생성 중...' : '완료!' }} {{ progress | number: '1.0-0' }}%
+    </p>
   </div>
 </div>
