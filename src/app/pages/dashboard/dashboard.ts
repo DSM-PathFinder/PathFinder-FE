@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { BaseChartDirective } from 'ng2-charts';
@@ -13,9 +13,10 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import { RoadmapService, Roadmap, Task } from '../../services/roadmap';
+import { RoadmapService, Roadmap, Task, UserStats, ChartPoint } from '../../services/roadmap';
 import { AuthService } from '../../services/auth';
 import { ToastService } from '../../components/toast/toast.service';
+import { DecimalPipe } from '@angular/common';
 
 Chart.register(
   CategoryScale,
@@ -31,7 +32,7 @@ Chart.register(
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink, LucideAngularModule, BaseChartDirective],
+  imports: [RouterLink, LucideAngularModule, BaseChartDirective, DecimalPipe],
   templateUrl: './dashboard.html',
 })
 export class DashboardComponent implements OnInit {
@@ -42,14 +43,17 @@ export class DashboardComponent implements OnInit {
 
   roadmap: Roadmap | null = null;
   tasks: Task[] = [];
+  stats: UserStats | null = null;
   isLoading = true;
+
   showReplanModal = false;
-  replanState: 'loading' | 'done' | null = null;
+  replanState: 'idle' | 'loading' | 'done' = 'idle';
+  replanProgress = 0;
+  private replanInterval: ReturnType<typeof setInterval> | null = null;
 
   get currentUser() {
     return this.authService.currentUser();
   }
-
   get currentWeek() {
     return this.roadmap?.weeks[0] ?? null;
   }
@@ -63,12 +67,16 @@ export class DashboardComponent implements OnInit {
     return `${this.progressPct}, 100`;
   }
 
+  get showReplanBanner() {
+    return this.roadmap && this.tasks.length > 0 && this.progressPct < 50;
+  }
+
   chartData: ChartData<'line'> = {
-    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+    labels: [],
     datasets: [
       {
         label: '실제 학습 시간',
-        data: [14, 18, 22, 8],
+        data: [],
         borderColor: '#4f46e5',
         backgroundColor: 'rgba(79,70,229,0.15)',
         borderWidth: 3,
@@ -79,7 +87,7 @@ export class DashboardComponent implements OnInit {
       },
       {
         label: '목표 시간',
-        data: [15, 20, 18, 15],
+        data: [],
         borderColor: '#cbd5e1',
         backgroundColor: 'transparent',
         borderWidth: 2,
@@ -122,11 +130,12 @@ export class DashboardComponent implements OnInit {
   };
 
   ngOnInit() {
-    this.loadRoadmap();
+    this.loadAll();
   }
 
-  loadRoadmap() {
+  loadAll() {
     this.isLoading = true;
+
     this.roadmapService.getAll().subscribe({
       next: (roadmaps) => {
         if (roadmaps.length > 0) {
@@ -135,12 +144,37 @@ export class DashboardComponent implements OnInit {
             ? (roadmaps.find((r) => r.id === latestId) ?? roadmaps[0])
             : roadmaps[0];
           this.tasks = [...(this.roadmap.weeks[0]?.tasks ?? [])];
+
+          this.loadChart(this.roadmap.id);
         }
         this.isLoading = false;
         this.cdr.detectChanges();
       },
       error: () => {
         this.isLoading = false;
+        this.cdr.detectChanges();
+      },
+    });
+
+    this.roadmapService.getStats().subscribe({
+      next: (stats) => {
+        this.stats = stats;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  loadChart(roadmapId: string) {
+    this.roadmapService.getChart(roadmapId).subscribe({
+      next: (points: ChartPoint[]) => {
+        this.chartData = {
+          ...this.chartData,
+          labels: points.map((p) => p.name),
+          datasets: [
+            { ...this.chartData.datasets[0], data: points.map((p) => p.hours) },
+            { ...this.chartData.datasets[1], data: points.map((p) => p.expected) },
+          ],
+        };
         this.cdr.detectChanges();
       },
     });
@@ -152,6 +186,12 @@ export class DashboardComponent implements OnInit {
         this.tasks = this.tasks.map((t) =>
           t.id === taskId ? { ...t, completed: updated.completed } : t,
         );
+        this.roadmapService.getStats().subscribe({
+          next: (s) => {
+            this.stats = s;
+            this.cdr.detectChanges();
+          },
+        });
         this.cdr.detectChanges();
       },
       error: () => this.toast.show('태스크 업데이트에 실패했습니다', 'error'),
@@ -162,6 +202,15 @@ export class DashboardComponent implements OnInit {
     if (!this.roadmap) return;
     this.showReplanModal = true;
     this.replanState = 'loading';
+    this.replanProgress = 0;
+
+    this.replanInterval = setInterval(() => {
+      if (this.replanProgress < 85) {
+        this.replanProgress += Math.random() * 3;
+        if (this.replanProgress > 85) this.replanProgress = 85;
+        this.cdr.detectChanges();
+      }
+    }, 400);
 
     const completedTaskIds = this.tasks.filter((t) => t.completed).map((t) => t.id);
     const currentWeekNum = this.roadmap.weeks[0]?.weekNumber ?? 1;
@@ -176,12 +225,18 @@ export class DashboardComponent implements OnInit {
       })
       .subscribe({
         next: (updated) => {
+          if (this.replanInterval) clearInterval(this.replanInterval);
+          this.replanProgress = 100;
           this.roadmap = updated;
           this.tasks = [...(updated.weeks[0]?.tasks ?? [])];
-          this.replanState = 'done';
+          setTimeout(() => {
+            this.replanState = 'done';
+            this.cdr.detectChanges();
+          }, 400);
           this.cdr.detectChanges();
         },
         error: () => {
+          if (this.replanInterval) clearInterval(this.replanInterval);
           this.toast.show('일정 재설정에 실패했습니다', 'error');
           this.closeReplan();
         },
@@ -190,9 +245,8 @@ export class DashboardComponent implements OnInit {
 
   closeReplan() {
     this.showReplanModal = false;
-    setTimeout(() => {
-      this.replanState = null;
-      this.cdr.detectChanges();
-    }, 200);
+    this.replanState = 'idle';
+    this.replanProgress = 0;
+    if (this.replanInterval) clearInterval(this.replanInterval);
   }
 }

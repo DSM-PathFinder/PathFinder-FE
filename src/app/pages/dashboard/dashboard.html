@@ -3,53 +3,47 @@
     <div class="flex items-center justify-center py-20">
       <div class="text-center">
         <lucide-icon name="loader" [size]="32" color="#6366f1" class="animate-spin mx-auto mb-3" />
-        <p class="text-slate-500">로드맵 불러오는 중...</p>
+        <p class="text-slate-500">불러오는 중...</p>
       </div>
     </div>
   }
 
   @if (!isLoading) {
-    <div class="space-y-6">
-      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 class="font-display text-3xl font-bold text-slate-900">
-            Welcome back, {{ currentUser?.name ?? 'User' }}!
-          </h1>
-          <p class="text-slate-500 mt-1">오늘도 목표를 향해 달려볼까요?</p>
-        </div>
-        <div
-          class="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-slate-200 shadow-sm"
-        >
-          <lucide-icon name="flame" [size]="20" color="#f59e0b" />
-          <span class="font-bold text-slate-900">4 Day Streak</span>
-        </div>
+    <!-- 헤더 -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div>
+        <h1 class="font-display text-3xl font-bold text-slate-900">
+          Welcome back, {{ currentUser?.name ?? 'User' }}!
+        </h1>
+        <p class="text-slate-500 mt-1">오늘도 목표를 향해 달려볼까요?</p>
       </div>
-
-      @if (roadmap) {
-        <div
-          class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-        >
-          <div class="flex items-center gap-3">
-            <div class="p-2 bg-amber-100 rounded-lg">
-              <lucide-icon name="alert-circle" [size]="20" color="#b45309" />
-            </div>
-            <div>
-              <h4 class="font-bold text-amber-900">진도가 조금 밀려있어요</h4>
-              <p class="text-sm text-amber-700">
-                지난 주차 목표를 다 채우지 못했습니다. 일정을 재조정할까요?
-              </p>
-            </div>
-          </div>
-          <button
-            (click)="handleReplan()"
-            class="shrink-0 flex items-center gap-2 px-4 py-2 bg-white text-amber-700 border border-amber-200 rounded-xl hover:bg-amber-100 transition-colors font-medium text-sm shadow-sm"
-          >
-            <lucide-icon name="refresh-cw" [size]="16" />
-            AI 일정 재설정
-          </button>
-        </div>
-      }
     </div>
+
+    <!-- AI 재설정 배너: 완료율 50% 미만일 때만 표시 -->
+    @if (showReplanBanner) {
+      <div
+        class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+      >
+        <div class="flex items-center gap-3">
+          <div class="p-2 bg-amber-100 rounded-lg shrink-0">
+            <lucide-icon name="alert-circle" [size]="20" color="#b45309" />
+          </div>
+          <div>
+            <h4 class="font-bold text-amber-900">진도가 조금 밀려있어요</h4>
+            <p class="text-sm text-amber-700">
+              현재 진행률이 {{ progressPct }}%입니다. AI가 남은 일정을 재조정해 드릴게요.
+            </p>
+          </div>
+        </div>
+        <button
+          (click)="handleReplan()"
+          class="shrink-0 flex items-center gap-2 px-4 py-2 bg-white text-amber-700 border border-amber-200 rounded-xl hover:bg-amber-100 transition-colors font-medium text-sm shadow-sm"
+        >
+          <lucide-icon name="refresh-cw" [size]="16" />
+          AI 일정 재설정
+        </button>
+      </div>
+    }
 
     @if (!roadmap) {
       <div class="text-center py-20">
@@ -73,7 +67,7 @@
     @if (roadmap) {
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div class="lg:col-span-2 space-y-8">
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div
               class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center gap-4"
             >
@@ -111,23 +105,12 @@
               class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center"
             >
               <div class="flex items-center gap-2 text-slate-500 mb-1">
-                <lucide-icon name="clock" [size]="16" />
-                <span class="text-sm font-medium">총 학습 시간</span>
-              </div>
-              <p class="text-2xl font-bold text-slate-900">
-                42<span class="text-base font-medium text-slate-500 ml-1">시간</span>
-              </p>
-            </div>
-
-            <div
-              class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center"
-            >
-              <div class="flex items-center gap-2 text-slate-500 mb-1">
                 <lucide-icon name="trending-up" [size]="16" />
                 <span class="text-sm font-medium">전체 진행률</span>
               </div>
               <p class="text-2xl font-bold text-slate-900">
-                25<span class="text-base font-medium text-slate-500 ml-1">%</span>
+                {{ stats?.overallProgress ?? 0
+                }}<span class="text-base font-medium text-slate-500 ml-1">%</span>
               </p>
             </div>
           </div>
@@ -157,7 +140,6 @@
             <div
               class="absolute top-0 right-0 w-32 h-32 bg-indigo-500/20 rounded-full blur-2xl transform translate-x-1/2 -translate-y-1/2"
             ></div>
-
             <div class="relative z-10">
               @if (currentWeek) {
                 <div
@@ -242,31 +224,40 @@
 
 @if (showReplanModal) {
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-fade-in"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4"
     (click)="replanState === 'done' ? closeReplan() : null"
   >
     <div
-      class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl animate-scale-in"
+      class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl"
       (click)="$event.stopPropagation()"
     >
       @if (replanState === 'loading') {
         <div
-          class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-indigo-50 flex items-center justify-center"
+          class="w-16 h-16 mx-auto mb-5 rounded-2xl bg-indigo-50 flex items-center justify-center"
         >
-          <lucide-icon name="refresh-cw" [size]="28" color="#4f46e5" class="animate-spin" />
+          <lucide-icon name="refresh-cw" [size]="30" color="#4f46e5" class="animate-spin" />
         </div>
-        <h3 class="text-xl font-bold text-slate-900 mb-2">AI가 일정을 재설정 중입니다</h3>
-        <p class="text-slate-500">현재 진도에 맞춰 남은 일정을 최적화하고 있습니다...</p>
+        <h3 class="text-xl font-bold text-slate-900 mb-2">일정 재조정 중</h3>
+        <p class="text-slate-500 text-sm mb-6">
+          현재 진도에 맞춰 남은 일정을 최적화하고 있습니다...
+        </p>
+        <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+          <div
+            class="h-full bg-indigo-600 rounded-full transition-all duration-500 ease-out"
+            [style.width]="replanProgress + '%'"
+          ></div>
+        </div>
+        <p class="text-xs text-slate-400 mt-2">{{ replanProgress | number: '1.0-0' }}%</p>
       }
 
       @if (replanState === 'done') {
         <div
-          class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-emerald-50 flex items-center justify-center animate-scale-in"
+          class="w-16 h-16 mx-auto mb-5 rounded-2xl bg-emerald-50 flex items-center justify-center"
         >
-          <lucide-icon name="check-circle-2" [size]="28" color="#10b981" />
+          <lucide-icon name="check-circle-2" [size]="30" color="#10b981" />
         </div>
-        <h3 class="text-xl font-bold text-slate-900 mb-2">일정 재설정 완료</h3>
-        <p class="text-slate-500 mb-6">남은 일정이 현재 진도에 맞게 최적화되었습니다.</p>
+        <h3 class="text-xl font-bold text-slate-900 mb-2">재조정 완료!</h3>
+        <p class="text-slate-500 text-sm mb-6">남은 일정이 현재 진도에 맞게 최적화되었습니다.</p>
         <button
           (click)="closeReplan()"
           class="w-full py-3 bg-indigo-900 text-white rounded-xl hover:bg-indigo-800 transition-colors font-medium"
