@@ -61,6 +61,12 @@ export class RoadmapComponent implements OnInit {
   togglePublic() {
     if (!this.activeRoadmap) return;
     const newVal = !this.activeRoadmap.isPublic;
+
+    this.roadmaps = this.roadmaps.map((r) =>
+      r.id === this.activeRoadmap!.id ? { ...r, isPublic: newVal } : r,
+    );
+    this.cdr.detectChanges();
+
     this.roadmapService.togglePublic(this.activeRoadmap.id, newVal).subscribe({
       next: (updated) => {
         this.roadmaps = this.roadmaps.map((r) => (r.id === updated.id ? updated : r));
@@ -70,14 +76,19 @@ export class RoadmapComponent implements OnInit {
         );
         this.cdr.detectChanges();
       },
-      error: () => this.toast.show('설정 변경에 실패했습니다', 'error'),
+      error: () => {
+        this.roadmaps = this.roadmaps.map((r) =>
+          r.id === this.activeRoadmap!.id ? { ...r, isPublic: !newVal } : r,
+        );
+        this.toast.show('설정 변경에 실패했습니다', 'error');
+        this.cdr.detectChanges();
+      },
     });
   }
 
   resourceIcon(type: string) {
     return type === 'video' ? 'youtube' : 'file-text';
   }
-
   resourceColor(type: string) {
     return type === 'video' ? '#ef4444' : '#3b82f6';
   }
