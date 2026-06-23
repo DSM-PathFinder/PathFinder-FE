@@ -24,41 +24,41 @@
     </div>
 
     <div class="flex-1 overflow-y-auto p-2 space-y-1">
-      @if (filteredNotes.length === 0) {
-        <div class="text-center text-sm text-slate-400 py-8">검색 결과가 없습니다</div>
+      @if (isLoading) {
+        <div class="flex items-center justify-center py-8">
+          <lucide-icon name="loader" [size]="20" color="#6366f1" class="animate-spin" />
+        </div>
+      }
+      @if (filteredNotes.length === 0 && !isLoading) {
+        <div class="text-center text-sm text-slate-400 py-8">노트가 없습니다</div>
       }
       @for (note of filteredNotes; track note.id) {
         <button
-          (click)="selectNote(note)"
+          (click)="selectNote(note, !!note.taskId)"
           [class]="
             activeNoteId === note.id
               ? 'w-full text-left p-3 rounded-xl border bg-indigo-50 border-indigo-100'
               : 'w-full text-left p-3 rounded-xl border border-transparent hover:bg-slate-50'
           "
         >
-          <h3
-            [class]="
-              activeNoteId === note.id
-                ? 'font-medium truncate mb-1 text-indigo-900'
-                : 'font-medium truncate mb-1 text-slate-700'
-            "
-          >
-            {{ note.title }}
-          </h3>
-          <div class="flex items-center justify-between gap-2 text-xs text-slate-500">
-            <span class="flex items-center gap-1.5">
-              <lucide-icon name="clock" [size]="12" />
-              {{ formatDate(note.updatedAt) }}
-            </span>
-            @if (weekLabel(note.weekId)) {
-              <span
-                class="flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 rounded text-[10px] font-medium"
-              >
-                <lucide-icon name="map" [size]="10" />
-                {{ weekLabel(note.weekId) }}
-              </span>
+          <div class="flex items-center gap-1.5 mb-1">
+            @if (note.taskId) {
+              <lucide-icon name="check-circle-2" [size]="12" color="#6366f1" class="shrink-0" />
             }
+            <h3
+              [class]="
+                activeNoteId === note.id
+                  ? 'font-medium truncate text-indigo-900 text-sm'
+                  : 'font-medium truncate text-slate-700 text-sm'
+              "
+            >
+              {{ note.title }}
+            </h3>
           </div>
+          <p class="text-xs text-slate-500 flex items-center gap-1">
+            <lucide-icon name="clock" [size]="10" />
+            {{ formatDate(note.updatedAt) }}
+          </p>
         </button>
       }
     </div>
@@ -68,12 +68,23 @@
     <div
       class="h-16 shrink-0 bg-white border-b border-slate-200 flex items-center justify-between px-6"
     >
-      <input
-        type="text"
-        [(ngModel)]="title"
-        placeholder="노트 제목"
-        class="text-xl font-bold text-slate-900 bg-transparent border-none focus:outline-none focus:ring-0 flex-1 mr-4"
-      />
+      @if (titleLocked) {
+        <div class="flex items-center gap-2 flex-1 mr-4">
+          <lucide-icon name="check-circle-2" [size]="18" color="#6366f1" class="shrink-0" />
+          <span class="text-xl font-bold text-slate-900 truncate">{{ title }}</span>
+          <span
+            class="text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-medium shrink-0"
+            >태스크 연동</span
+          >
+        </div>
+      } @else {
+        <input
+          type="text"
+          [(ngModel)]="title"
+          placeholder="노트 제목"
+          class="text-xl font-bold text-slate-900 bg-transparent border-none focus:outline-none focus:ring-0 flex-1 mr-4"
+        />
+      }
       <button
         (click)="save()"
         [disabled]="isSaving"
@@ -83,6 +94,15 @@
         {{ isSaving ? '저장 중...' : '저장하기' }}
       </button>
     </div>
+
+    @if (titleLocked) {
+      <div
+        class="px-6 py-2 bg-indigo-50 border-b border-indigo-100 text-xs text-indigo-600 flex items-center gap-2"
+      >
+        <lucide-icon name="info" [size]="12" />
+        저장하면 해당 태스크가 자동으로 완료 처리됩니다
+      </div>
+    }
 
     <div class="flex-1 flex overflow-hidden">
       <div class="flex-1 border-r border-slate-200 bg-white overflow-y-auto">

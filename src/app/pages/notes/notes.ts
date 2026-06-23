@@ -1,5 +1,5 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, OnInit, AfterViewChecked, inject, ChangeDetectorRef } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { MarkdownModule } from 'ngx-markdown';
@@ -13,8 +13,9 @@ import hljs from 'highlight.js';
   imports: [FormsModule, LucideAngularModule, MarkdownModule],
   templateUrl: './notes.html',
 })
-export class NotesComponent implements OnInit {
+export class NotesComponent implements OnInit, AfterViewChecked {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private notesService = inject(NotesService);
   private toast = inject(ToastService);
   private cdr = inject(ChangeDetectorRef);
@@ -23,6 +24,7 @@ export class NotesComponent implements OnInit {
   activeNoteId: string = '';
   title: string = '';
   content: string = '';
+  titleLocked: boolean = false;
   searchQuery: string = '';
   isSaving: boolean = false;
   isLoading: boolean = true;
@@ -31,7 +33,7 @@ export class NotesComponent implements OnInit {
     const q = this.searchQuery.toLowerCase().trim();
     if (!q) return this.notes;
     return this.notes.filter(
-      (n) => n.title.toLowerCase().includes(q) || n.content?.toLowerCase().includes(q),
+      (n) => n.title.toLowerCase().includes(q) || (n.content?.toLowerCase().includes(q) ?? false),
     );
   }
 
@@ -41,7 +43,9 @@ export class NotesComponent implements OnInit {
 
   ngAfterViewChecked() {
     document.querySelectorAll('pre code').forEach((el) => {
-      hljs.highlightElement(el as HTMLElement);
+      if (!(el as HTMLElement).dataset['highlighted']) {
+        hljs.highlightElement(el as HTMLElement);
+      }
     });
   }
 
@@ -50,35 +54,63 @@ export class NotesComponent implements OnInit {
     this.notesService.getAll().subscribe({
       next: (notes) => {
         this.notes = notes;
-        if (notes.length > 0) {
+        if (
+          notes.length > 0 &&
+          !this.route.snapshot.queryParams['task'] &&
+          !this.route.snapshot.queryParams['week']
+        ) {
           this.selectNote(notes[0]);
         }
         this.isLoading = false;
 
-        // ?week= 파라미터 처리
         this.route.queryParams.subscribe((params) => {
+          const taskId = params['task'];
           const weekId = params['week'];
-          if (!weekId) return;
 
-          const existing = this.notes.find((n) => n.weekId === weekId);
-          if (existing) {
-            this.selectNote(existing);
-          } else {
-            // 해당 주차 노트 없으면 새로 생성
-            this.notesService
-              .create({
-                title: `Week 노트`,
-                content: '# 새 노트\n\n여기에 내용을 작성해보세요...',
-                weekId,
-              })
-              .subscribe({
-                next: (note) => {
-                  this.notes = [note, ...this.notes];
-                  this.selectNote(note);
-                  this.toast.show('새 노트를 만들었습니다', 'success');
-                  this.cdr.detectChanges();
-                },
-              });
+          if (taskId) {
+            this.notesService.getByTask(taskId).subscribe({
+              next: (note) => {
+                if (note) {
+                  this.selectNote(note, true);
+                } else {
+                  const taskTitle = params['title'] ?? '학습 노트';
+                  this.notesService
+                    .create({
+                      title: taskTitle,
+                      content: '',
+                      taskId,
+                      weekId: weekId ?? undefined,
+                    })
+                    .subscribe({
+                      next: (newNote) => {
+                        this.notes = [newNote, ...this.notes];
+                        this.selectNote(newNote, true);
+                        this.cdr.detectChanges();
+                      },
+                    });
+                }
+                this.cdr.detectChanges();
+              },
+            });
+          } else if (weekId) {
+            const existing = this.notes.find((n) => n.weekId === weekId && !n.taskId);
+            if (existing) {
+              this.selectNote(existing);
+            } else {
+              this.notesService
+                .create({
+                  title: `Week 학습 노트`,
+                  content: '# 학습 노트\n\n여기에 내용을 작성해보세요...',
+                  weekId,
+                })
+                .subscribe({
+                  next: (note) => {
+                    this.notes = [note, ...this.notes];
+                    this.selectNote(note);
+                    this.cdr.detectChanges();
+                  },
+                });
+            }
           }
         });
 
@@ -91,10 +123,11 @@ export class NotesComponent implements OnInit {
     });
   }
 
-  selectNote(note: Note) {
+  selectNote(note: Note, locked = false) {
     this.activeNoteId = note.id;
     this.title = note.title;
     this.content = note.content ?? '';
+    this.titleLocked = locked || !!note.taskId;
     setTimeout(() => this.cdr.detectChanges(), 0);
   }
 
@@ -110,7 +143,7 @@ export class NotesComponent implements OnInit {
         next: (updated) => {
           this.notes = this.notes.map((n) => (n.id === updated.id ? updated : n));
           this.isSaving = false;
-          this.toast.show('노트가 저장되었습니다', 'success');
+          this.toast.show('저장되었습니다', 'success');
           this.cdr.detectChanges();
         },
         error: () => {
@@ -130,17 +163,11 @@ export class NotesComponent implements OnInit {
       .subscribe({
         next: (note) => {
           this.notes = [note, ...this.notes];
-          this.selectNote(note);
+          this.selectNote(note, false);
           this.cdr.detectChanges();
         },
         error: () => this.toast.show('노트 생성에 실패했습니다', 'error'),
       });
-  }
-
-  weekLabel(weekId?: string): string {
-    if (!weekId) return '';
-    const match = weekId.match(/w_(\d+)/);
-    return match ? `W${match[1]}` : '';
   }
 
   formatDate(dateStr: string): string {
