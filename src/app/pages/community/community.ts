@@ -25,10 +25,11 @@ export class CommunityComponent implements OnInit {
   isLoading = true;
 
   get filteredPosts(): CommunityRoadmap[] {
-    return this.posts.filter((p) => {
-      const q = this.searchQuery.toLowerCase();
-      return !q || p.title.toLowerCase().includes(q) || p.goal.toLowerCase().includes(q);
-    });
+    const q = this.searchQuery.toLowerCase();
+    if (!q) return this.posts;
+    return this.posts.filter(
+      (p) => p.title.toLowerCase().includes(q) || p.goal.toLowerCase().includes(q),
+    );
   }
 
   ngOnInit() {
@@ -37,7 +38,7 @@ export class CommunityComponent implements OnInit {
 
   loadPosts() {
     this.isLoading = true;
-    this.communityService.getPublic().subscribe({
+    this.communityService.getPublic(this.activeCategory).subscribe({
       next: (posts) => {
         this.posts = posts;
         this.isLoading = false;
@@ -48,6 +49,11 @@ export class CommunityComponent implements OnInit {
         this.cdr.detectChanges();
       },
     });
+  }
+
+  selectCategory(cat: string) {
+    this.activeCategory = cat;
+    this.loadPosts();
   }
 
   openPost(post: CommunityRoadmap) {
@@ -75,25 +81,11 @@ export class CommunityComponent implements OnInit {
     });
   }
 
-  isLiked(id: string): boolean {
+  isLiked(id: string) {
     return this.likedIds.has(id);
   }
 
-  likeCount(post: CommunityRoadmap): number {
+  likeCount(post: CommunityRoadmap) {
     return (post._count?.likes ?? 0) + (this.isLiked(post.id) ? 1 : 0);
-  }
-
-  monogramColor(name: string): string {
-    const colors = [
-      'bg-indigo-100 text-indigo-700',
-      'bg-amber-100 text-amber-800',
-      'bg-emerald-100 text-emerald-700',
-      'bg-rose-100 text-rose-700',
-      'bg-sky-100 text-sky-700',
-      'bg-violet-100 text-violet-700',
-    ];
-    let h = 0;
-    for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
-    return colors[h % colors.length];
   }
 }
