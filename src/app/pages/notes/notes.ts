@@ -1,5 +1,5 @@
 import { Component, OnInit, AfterViewChecked, inject, ChangeDetectorRef } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { MarkdownModule } from 'ngx-markdown';
@@ -15,19 +15,18 @@ import hljs from 'highlight.js';
 })
 export class NotesComponent implements OnInit, AfterViewChecked {
   private route = inject(ActivatedRoute);
-  private router = inject(Router);
   private notesService = inject(NotesService);
   private toast = inject(ToastService);
   private cdr = inject(ChangeDetectorRef);
 
   notes: Note[] = [];
-  activeNoteId: string = '';
-  title: string = '';
-  content: string = '';
-  titleLocked: boolean = false;
-  searchQuery: string = '';
-  isSaving: boolean = false;
-  isLoading: boolean = true;
+  activeNoteId = '';
+  title = '';
+  content = '';
+  titleLocked = false;
+  searchQuery = '';
+  isSaving = false;
+  isLoading = true;
 
   get filteredNotes(): Note[] {
     const q = this.searchQuery.toLowerCase().trim();
@@ -38,81 +37,64 @@ export class NotesComponent implements OnInit, AfterViewChecked {
   }
 
   ngOnInit() {
-    this.loadNotes();
-  }
-
-  ngAfterViewChecked() {
-    document.querySelectorAll('pre code').forEach((el) => {
-      if (!(el as HTMLElement).dataset['highlighted']) {
-        hljs.highlightElement(el as HTMLElement);
-      }
-    });
-  }
-
-  loadNotes() {
     this.isLoading = true;
     this.notesService.getAll().subscribe({
       next: (notes) => {
         this.notes = notes;
-        if (
-          notes.length > 0 &&
-          !this.route.snapshot.queryParams['task'] &&
-          !this.route.snapshot.queryParams['week']
-        ) {
-          this.selectNote(notes[0]);
-        }
         this.isLoading = false;
 
-        this.route.queryParams.subscribe((params) => {
-          const taskId = params['task'];
-          const weekId = params['week'];
+        const params = this.route.snapshot.queryParams;
+        const taskId = params['task'];
+        const weekId = params['week'];
+        const taskTitle = params['title'];
 
-          if (taskId) {
-            this.notesService.getByTask(taskId).subscribe({
-              next: (note) => {
-                if (note) {
-                  this.selectNote(note, true);
-                } else {
-                  const taskTitle = params['title'] ?? '학습 노트';
-                  this.notesService
-                    .create({
-                      title: taskTitle,
-                      content: '',
-                      taskId,
-                      weekId: weekId ?? undefined,
-                    })
-                    .subscribe({
-                      next: (newNote) => {
-                        this.notes = [newNote, ...this.notes];
-                        this.selectNote(newNote, true);
-                        this.cdr.detectChanges();
-                      },
-                    });
-                }
-                this.cdr.detectChanges();
-              },
-            });
-          } else if (weekId) {
-            const existing = this.notes.find((n) => n.weekId === weekId && !n.taskId);
-            if (existing) {
-              this.selectNote(existing);
-            } else {
-              this.notesService
-                .create({
-                  title: `Week 학습 노트`,
-                  content: '# 학습 노트\n\n여기에 내용을 작성해보세요...',
-                  weekId,
-                })
-                .subscribe({
-                  next: (note) => {
-                    this.notes = [note, ...this.notes];
-                    this.selectNote(note);
-                    this.cdr.detectChanges();
-                  },
-                });
-            }
+        if (taskId) {
+          this.notesService.getByTask(taskId).subscribe({
+            next: (note) => {
+              if (note) {
+                this.selectNote(note, true);
+              } else {
+                this.notesService
+                  .create({
+                    title: taskTitle ?? '학습 노트',
+                    content: '',
+                    taskId,
+                    weekId: weekId ?? undefined,
+                  })
+                  .subscribe({
+                    next: (newNote) => {
+                      this.notes = [newNote, ...this.notes];
+                      this.selectNote(newNote, true);
+                      this.cdr.detectChanges();
+                    },
+                    error: () => this.toast.show('노트 생성에 실패했습니다', 'error'),
+                  });
+              }
+              this.cdr.detectChanges();
+            },
+          });
+        } else if (weekId) {
+          const existing = this.notes.find((n) => n.weekId === weekId && !n.taskId);
+          if (existing) {
+            this.selectNote(existing, false);
+          } else {
+            this.notesService
+              .create({
+                title: `Week 학습 노트`,
+                content: '# 학습 노트\n\n여기에 내용을 작성해보세요...',
+                weekId,
+              })
+              .subscribe({
+                next: (note) => {
+                  this.notes = [note, ...this.notes];
+                  this.selectNote(note, false);
+                  this.cdr.detectChanges();
+                },
+              });
           }
-        });
+        } else if (notes.length > 0) {
+          this.selectNote(notes[0], !!notes[0].taskId);
+        }
 
         this.cdr.detectChanges();
       },
@@ -120,6 +102,13 @@ export class NotesComponent implements OnInit, AfterViewChecked {
         this.isLoading = false;
         this.cdr.detectChanges();
       },
+    });
+  }
+
+  ngAfterViewChecked() {
+    document.querySelectorAll('pre code:not([data-highlighted])').forEach((el) => {
+      (el as HTMLElement).dataset['highlighted'] = 'true';
+      hljs.highlightElement(el as HTMLElement);
     });
   }
 
@@ -136,14 +125,14 @@ export class NotesComponent implements OnInit, AfterViewChecked {
     this.isSaving = true;
     this.notesService
       .update(this.activeNoteId, {
-        title: this.title,
+        title: this.titleLocked ? this.title : this.title,
         content: this.content,
       })
       .subscribe({
         next: (updated) => {
           this.notes = this.notes.map((n) => (n.id === updated.id ? updated : n));
           this.isSaving = false;
-          this.toast.show('저장되었습니다', 'success');
+          this.toast.show('저장되었습니다 ✓', 'success');
           this.cdr.detectChanges();
         },
         error: () => {

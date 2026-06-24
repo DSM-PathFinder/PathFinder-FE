@@ -29,7 +29,7 @@
           <lucide-icon name="loader" [size]="20" color="#6366f1" class="animate-spin" />
         </div>
       }
-      @if (filteredNotes.length === 0 && !isLoading) {
+      @if (!isLoading && filteredNotes.length === 0) {
         <div class="text-center text-sm text-slate-400 py-8">노트가 없습니다</div>
       }
       @for (note of filteredNotes; track note.id) {
@@ -41,15 +41,15 @@
               : 'w-full text-left p-3 rounded-xl border border-transparent hover:bg-slate-50'
           "
         >
-          <div class="flex items-center gap-1.5 mb-1">
+          <div class="flex items-center gap-1.5 mb-1 min-w-0">
             @if (note.taskId) {
               <lucide-icon name="check-circle-2" [size]="12" color="#6366f1" class="shrink-0" />
             }
             <h3
               [class]="
                 activeNoteId === note.id
-                  ? 'font-medium truncate text-indigo-900 text-sm'
-                  : 'font-medium truncate text-slate-700 text-sm'
+                  ? 'font-medium text-indigo-900 text-sm truncate'
+                  : 'font-medium text-slate-700 text-sm truncate'
               "
             >
               {{ note.title }}
@@ -66,14 +66,14 @@
 
   <div class="flex-1 flex flex-col overflow-hidden">
     <div
-      class="h-16 shrink-0 bg-white border-b border-slate-200 flex items-center justify-between px-6"
+      class="h-14 shrink-0 bg-white border-b border-slate-200 flex items-center justify-between px-6 gap-4"
     >
       @if (titleLocked) {
-        <div class="flex items-center gap-2 flex-1 mr-4">
-          <lucide-icon name="check-circle-2" [size]="18" color="#6366f1" class="shrink-0" />
-          <span class="text-xl font-bold text-slate-900 truncate">{{ title }}</span>
+        <div class="flex items-center gap-2 flex-1 min-w-0">
+          <lucide-icon name="check-circle-2" [size]="16" color="#6366f1" class="shrink-0" />
+          <span class="text-lg font-bold text-slate-900 truncate">{{ title }}</span>
           <span
-            class="text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-medium shrink-0"
+            class="shrink-0 text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-medium"
             >태스크 연동</span
           >
         </div>
@@ -82,25 +82,25 @@
           type="text"
           [(ngModel)]="title"
           placeholder="노트 제목"
-          class="text-xl font-bold text-slate-900 bg-transparent border-none focus:outline-none focus:ring-0 flex-1 mr-4"
+          class="flex-1 text-lg font-bold text-slate-900 bg-transparent border-none focus:outline-none focus:ring-0 min-w-0"
         />
       }
       <button
         (click)="save()"
         [disabled]="isSaving"
-        class="shrink-0 flex items-center gap-2 px-4 py-2 bg-indigo-900 text-white rounded-lg hover:bg-indigo-800 transition-colors text-sm font-medium disabled:opacity-70"
+        class="shrink-0 flex items-center gap-2 px-4 py-2 bg-indigo-900 text-white rounded-lg hover:bg-indigo-800 transition-colors text-sm font-medium disabled:opacity-60"
       >
-        <lucide-icon name="save" [size]="16" />
-        {{ isSaving ? '저장 중...' : '저장하기' }}
+        <lucide-icon name="save" [size]="15" />
+        {{ isSaving ? '저장 중...' : '저장' }}
       </button>
     </div>
 
     @if (titleLocked) {
-      <div
-        class="px-6 py-2 bg-indigo-50 border-b border-indigo-100 text-xs text-indigo-600 flex items-center gap-2"
-      >
-        <lucide-icon name="info" [size]="12" />
-        저장하면 해당 태스크가 자동으로 완료 처리됩니다
+      <div class="px-6 py-2 bg-indigo-50 border-b border-indigo-100 flex items-center gap-2">
+        <lucide-icon name="info" [size]="14" color="#6366f1" />
+        <p class="text-xs text-indigo-600">
+          내용을 작성하고 저장하면 해당 태스크가 자동으로 <strong>완료 처리</strong>됩니다.
+        </p>
       </div>
     }
 
