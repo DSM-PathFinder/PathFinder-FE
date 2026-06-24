@@ -13,7 +13,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import { RoadmapService, Roadmap, Task, UserStats, ChartPoint } from '../../services/roadmap';
+import { RoadmapService, Roadmap, Task, Week } from '../../services/roadmap';
 import { AuthService } from '../../services/auth';
 import { ToastService } from '../../components/toast/toast.service';
 import { DecimalPipe } from '@angular/common';
@@ -36,39 +36,74 @@ Chart.register(
   templateUrl: './dashboard.html',
 })
 export class DashboardComponent implements OnInit {
-  private roadmapService = inject(RoadmapService);
-  private authService = inject(AuthService);
+  private roadmapSvc = inject(RoadmapService);
+  private authSvc = inject(AuthService);
   private toast = inject(ToastService);
   private cdr = inject(ChangeDetectorRef);
 
-  roadmap: Roadmap | null = null;
+  roadmaps: Roadmap[] = [];
+  activeRoadmap: Roadmap | null = null;
   tasks: Task[] = [];
-  stats: UserStats | null = null;
   isLoading = true;
 
   showReplanModal = false;
   replanState: 'idle' | 'loading' | 'done' = 'idle';
-  replanProgress = 0;
   private replanInterval: ReturnType<typeof setInterval> | null = null;
+  replanProgress = 0;
 
   get currentUser() {
-    return this.authService.currentUser();
+    return this.authSvc.currentUser();
   }
   get currentWeek() {
-    return this.roadmap?.weeks[0] ?? null;
+    return this.activeRoadmap?.weeks[0] ?? null;
   }
   get completedCount() {
     return this.tasks.filter((t) => t.completed).length;
   }
+  get totalTasks() {
+    return this.tasks.length;
+  }
   get progressPct() {
-    return this.tasks.length ? Math.round((this.completedCount / this.tasks.length) * 100) : 0;
+    return this.totalTasks ? Math.round((this.completedCount / this.totalTasks) * 100) : 0;
   }
   get strokeDasharray() {
     return `${this.progressPct}, 100`;
   }
-
   get showReplanBanner() {
-    return this.roadmap && this.tasks.length > 0 && this.progressPct < 50;
+    return this.activeRoadmap && this.totalTasks > 0 && this.progressPct < 50;
+  }
+
+  get allTasksCount() {
+    return this.activeRoadmap?.weeks.reduce((a, w) => a + w.tasks.length, 0) ?? 0;
+  }
+  get allCompletedCount() {
+    return (
+      this.activeRoadmap?.weeks.reduce(
+        (a, w) => a + w.tasks.filter((t) => t.completed).length,
+        0,
+      ) ?? 0
+    );
+  }
+  get overallProgress() {
+    return this.allTasksCount ? Math.round((this.allCompletedCount / this.allTasksCount) * 100) : 0;
+  }
+  get studiedHours() {
+    if (!this.activeRoadmap) return 0;
+    return this.activeRoadmap.weeks.reduce((acc, w) => {
+      const total = w.tasks.length;
+      const done = w.tasks.filter((t) => t.completed).length;
+      return acc + (total > 0 ? Math.round((done / total) * w.estimatedHours) : 0);
+    }, 0);
+  }
+  get completedWeeks() {
+    return (
+      this.activeRoadmap?.weeks.filter(
+        (w) => w.tasks.length > 0 && w.tasks.every((t) => t.completed),
+      ).length ?? 0
+    );
+  }
+  get totalWeeks() {
+    return this.activeRoadmap?.weeks.length ?? 0;
   }
 
   chartData: ChartData<'line'> = {
@@ -135,17 +170,13 @@ export class DashboardComponent implements OnInit {
 
   loadAll() {
     this.isLoading = true;
-
-    this.roadmapService.getAll().subscribe({
+    this.roadmapSvc.getAll().subscribe({
       next: (roadmaps) => {
+        this.roadmaps = roadmaps;
         if (roadmaps.length > 0) {
           const latestId = localStorage.getItem('latest_roadmap_id');
-          this.roadmap = latestId
-            ? (roadmaps.find((r) => r.id === latestId) ?? roadmaps[0])
-            : roadmaps[0];
-          this.tasks = [...(this.roadmap.weeks[0]?.tasks ?? [])];
-
-          this.loadChart(this.roadmap.id);
+          const target = latestId ? roadmaps.find((r) => r.id === latestId) : null;
+          this.selectRoadmap(target ?? roadmaps[0]);
         }
         this.isLoading = false;
         this.cdr.detectChanges();
@@ -155,80 +186,106 @@ export class DashboardComponent implements OnInit {
         this.cdr.detectChanges();
       },
     });
-
-    this.roadmapService.getStats().subscribe({
-      next: (stats) => {
-        this.stats = stats;
-        this.cdr.detectChanges();
-      },
-    });
   }
 
-  loadChart(roadmapId: string) {
-    this.roadmapService.getChart(roadmapId).subscribe({
-      next: (points: ChartPoint[]) => {
-        this.chartData = {
-          ...this.chartData,
-          labels: points.map((p) => p.name),
-          datasets: [
-            { ...this.chartData.datasets[0], data: points.map((p) => p.hours) },
-            { ...this.chartData.datasets[1], data: points.map((p) => p.expected) },
-          ],
-        };
-        this.cdr.detectChanges();
-      },
+  selectRoadmap(roadmap: Roadmap) {
+    this.activeRoadmap = roadmap;
+    this.tasks = [...(roadmap.weeks[0]?.tasks ?? [])];
+    this.rebuildChart(roadmap.weeks);
+    this.cdr.detectChanges();
+  }
+
+  rebuildChart(weeks: Week[]) {
+    const labels = weeks.map((w) => `W${w.weekNumber}`);
+    const actual = weeks.map((w) => {
+      const total = w.tasks.length;
+      const done = w.tasks.filter((t) => t.completed).length;
+      return total > 0 ? Math.round((done / total) * w.estimatedHours) : 0;
     });
+    const expected = weeks.map((w) => w.estimatedHours);
+
+    this.chartData = {
+      ...this.chartData,
+      labels,
+      datasets: [
+        { ...this.chartData.datasets[0], data: actual },
+        { ...this.chartData.datasets[1], data: expected },
+      ],
+    };
   }
 
   toggleTask(taskId: string) {
-    this.roadmapService.toggleTask(taskId).subscribe({
+    this.tasks = this.tasks.map((t) => (t.id === taskId ? { ...t, completed: !t.completed } : t));
+    if (this.activeRoadmap) {
+      const updatedWeeks = this.activeRoadmap.weeks.map((w, i) =>
+        i === 0 ? { ...w, tasks: this.tasks } : w,
+      );
+      this.activeRoadmap = { ...this.activeRoadmap, weeks: updatedWeeks };
+      this.rebuildChart(updatedWeeks);
+    }
+    this.cdr.detectChanges();
+
+    this.roadmapSvc.toggleTask(taskId).subscribe({
       next: (updated) => {
         this.tasks = this.tasks.map((t) =>
           t.id === taskId ? { ...t, completed: updated.completed } : t,
         );
-        this.roadmapService.getStats().subscribe({
-          next: (s) => {
-            this.stats = s;
-            this.cdr.detectChanges();
-          },
-        });
+        if (this.activeRoadmap) {
+          const w2 = this.activeRoadmap.weeks.map((w, i) =>
+            i === 0 ? { ...w, tasks: this.tasks } : w,
+          );
+          this.activeRoadmap = { ...this.activeRoadmap, weeks: w2 };
+          this.rebuildChart(w2);
+        }
         this.cdr.detectChanges();
       },
-      error: () => this.toast.show('태스크 업데이트에 실패했습니다', 'error'),
+      error: () => {
+        this.tasks = this.tasks.map((t) =>
+          t.id === taskId ? { ...t, completed: !t.completed } : t,
+        );
+        if (this.activeRoadmap) {
+          const w2 = this.activeRoadmap.weeks.map((w, i) =>
+            i === 0 ? { ...w, tasks: this.tasks } : w,
+          );
+          this.activeRoadmap = { ...this.activeRoadmap, weeks: w2 };
+          this.rebuildChart(w2);
+        }
+        this.toast.show('태스크 업데이트에 실패했습니다', 'error');
+        this.cdr.detectChanges();
+      },
     });
   }
 
   handleReplan() {
-    if (!this.roadmap) return;
+    if (!this.activeRoadmap) return;
     this.showReplanModal = true;
     this.replanState = 'loading';
     this.replanProgress = 0;
 
     this.replanInterval = setInterval(() => {
       if (this.replanProgress < 85) {
-        this.replanProgress += Math.random() * 3;
-        if (this.replanProgress > 85) this.replanProgress = 85;
+        this.replanProgress = Math.min(this.replanProgress + Math.random() * 3, 85);
         this.cdr.detectChanges();
       }
     }, 400);
 
-    const completedTaskIds = this.tasks.filter((t) => t.completed).map((t) => t.id);
-    const currentWeekNum = this.roadmap.weeks[0]?.weekNumber ?? 1;
-    const remainingWeeks = this.roadmap.weeks.length - currentWeekNum + 1;
+    const completedIds = this.tasks.filter((t) => t.completed).map((t) => t.id);
+    const curWeek = this.activeRoadmap.weeks[0]?.weekNumber ?? 1;
+    const remaining = this.activeRoadmap.weeks.length - curWeek + 1;
 
-    this.roadmapService
+    this.roadmapSvc
       .replan({
-        roadmapId: this.roadmap.id,
-        currentWeek: currentWeekNum,
-        completedTasks: completedTaskIds,
-        remainingWeeks,
+        roadmapId: this.activeRoadmap.id,
+        currentWeek: curWeek,
+        completedTasks: completedIds,
+        remainingWeeks: remaining,
       })
       .subscribe({
         next: (updated) => {
           if (this.replanInterval) clearInterval(this.replanInterval);
           this.replanProgress = 100;
-          this.roadmap = updated;
-          this.tasks = [...(updated.weeks[0]?.tasks ?? [])];
+          this.roadmaps = this.roadmaps.map((r) => (r.id === updated.id ? updated : r));
+          this.selectRoadmap(updated);
           setTimeout(() => {
             this.replanState = 'done';
             this.cdr.detectChanges();
