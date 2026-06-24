@@ -1,9 +1,7 @@
 import { Component } from '@angular/core';
-import { LucideAngularModule } from 'lucide-angular';
-import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { RoadmapService } from '../../services/roadmap';
-import { ToastService } from '../../components/toast/toast.service';
+import { FormsModule } from '@angular/forms';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
   selector: 'app-onboarding',
@@ -13,7 +11,6 @@ import { ToastService } from '../../components/toast/toast.service';
 })
 export class OnboardingComponent {
   step = 1;
-  isLoading = false;
 
   formData = {
     level: '',
@@ -69,14 +66,10 @@ export class OnboardingComponent {
     },
   ];
 
-  constructor(
-    private router: Router,
-    private roadmapService: RoadmapService,
-    private toast: ToastService,
-  ) {}
+  constructor(private router: Router) {}
 
   get progressWidth() {
-    return `${this.step / 4}*100%`;
+    return `${(this.step / 4) * 100}%`;
   }
   get currentMeta() {
     return this.stepMeta[this.step - 1];
@@ -98,8 +91,11 @@ export class OnboardingComponent {
   }
 
   next() {
-    if (this.step < 4) this.step++;
-    else this.generate();
+    if (this.step < 4) {
+      this.step++;
+    } else {
+      this.generate();
+    }
   }
 
   back() {
@@ -112,8 +108,11 @@ export class OnboardingComponent {
 
   toggleInterest(interest: string) {
     const idx = this.formData.selectedInterests.indexOf(interest);
-    if (idx > -1) this.formData.selectedInterests.splice(idx, 1);
-    else this.formData.selectedInterests.push(interest);
+    if (idx > -1) {
+      this.formData.selectedInterests.splice(idx, 1);
+    } else {
+      this.formData.selectedInterests.push(interest);
+    }
     this.formData.selectedInterests = [...this.formData.selectedInterests];
   }
 
@@ -121,33 +120,12 @@ export class OnboardingComponent {
     return this.formData.selectedInterests.includes(i);
   }
 
-  onHoursChange(v: number) {
-    this.formData.hours = v;
+  onHoursChange(e: Event) {
+    this.formData.hours = Number((e.target as HTMLInputElement).value);
   }
 
   private generate() {
-    this.isLoading = true;
+    sessionStorage.setItem('onboarding_data', JSON.stringify(this.formData));
     this.router.navigate(['/generating']);
-
-    this.roadmapService.generateWithAI(this.formData).subscribe({
-      next: (roadmap) => {
-        localStorage.setItem('latest_roadmap_id', roadmap.id);
-        this.router.navigate(['/roadmap']);
-      },
-      error: (err) => {
-        console.log(err);
-        this.toast.show('로드맵 생성에 실패했습니다. 다시 시도해주세요.', 'error');
-        this.router.navigate(['/onboarding']);
-        this.isLoading = false;
-      },
-    });
-  }
-
-  get sliderPct() {
-    return ((this.formData.hours - 1) / (40 - 1)) * 100;
-  }
-
-  onSliderChange(e: Event) {
-    this.formData.hours = Number((e.target as HTMLInputElement).value);
   }
 }
